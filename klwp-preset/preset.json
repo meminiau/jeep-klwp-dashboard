@@ -1,0 +1,943 @@
+{
+    "preset_info":  {
+                        "title":  "Jeep HUD Dashboard",
+                        "description":  "Jeep portrait stereo KLWP dashboard with Gemini Voice, Torque, Jellyfin, Waze, YouTube, and YouTube Music + Audio Glow via Floating Apps.",
+                        "author":  "Jeep HUD KLWP",
+                        "email":  "",
+                        "version":  11,
+                        "release":  376000000,
+                        "locked":  false,
+                        "width":  720,
+                        "height":  1290,
+                        "xscreens":  1,
+                        "yscreens":  1,
+                        "features":  ""
+                    },
+    "preset_root":  {
+                        "internal_type":  "RootLayerModule",
+                        "background_type":  "IMAGE",
+                        "background_color":  "#FF06101B",
+                        "background_scroll":  "NONE",
+                        "background_bitmap":  "kfile://org.kustom.provider/bitmaps/bg_jeep_hud.jpg",
+                        "globals_list":  {
+                                             "active_app":  {
+                                                                "index":  1,
+                                                                "type":  "TEXT",
+                                                                "title":  "Active App",
+                                                                "description":  "Currently selected sidebar app button (none, gemini, torque, jellyfin, waze, youtube, ytmusic)",
+                                                                "global_formula":  "",
+                                                                "value":  "none"
+                                                            },
+                                             "clock_24h":  {
+                                                               "index":  2,
+                                                               "type":  "SWITCH",
+                                                               "title":  "24-Hour Clock",
+                                                               "description":  "ON = 24-hour clock (HH:mm), OFF = 12-hour clock (hh:mm)",
+                                                               "global_formula":  "",
+                                                               "value":  1
+                                                           },
+                                             "accent_color":  {
+                                                                  "index":  3,
+                                                                  "type":  "COLOR",
+                                                                  "title":  "HUD Text Color",
+                                                                  "description":  "Primary HUD text color",
+                                                                  "global_formula":  "",
+                                                                  "value":  "#FFEAF7FF"
+                                                              }
+                                         },
+                        "viewgroup_items":  [
+                                                {
+                                                    "internal_type":  "OverlapLayerModule",
+                                                    "internal_title":  "Top HUD Clock \u0026 Date",
+                                                    "position_anchor":  "TOP",
+                                                    "position_offset_x":  0,
+                                                    "position_offset_y":  38,
+                                                    "internal_toggles":  {
+                                                                             "position_offset_y":  10
+                                                                         },
+                                                    "internal_formulas":  {
+                                                                              "position_offset_y":  "$si(rheight)*0.0295$"
+                                                                          },
+                                                    "internal_events":  [
+                                                                            {
+                                                                                "type":  "SINGLE_TAP",
+                                                                                "action":  "LAUNCH_ACTIVITY",
+                                                                                "intent":  "intent:#Intent;component=com.jeep.klwpdash/com.jeep.klwpdash.MainActivity;end"
+                                                                            }
+                                                                        ],
+                                                    "viewgroup_items":  [
+                                                                            {
+                                                                                "internal_type":  "ShapeModule",
+                                                                                "internal_title":  "Settings Hit Area",
+                                                                                "position_anchor":  "TOP",
+                                                                                "shape_type":  "RECT",
+                                                                                "shape_width":  300,
+                                                                                "shape_height":  150,
+                                                                                "paint_color":  "#00000000"
+                                                                            },
+                                                                            {
+                                                                                "internal_type":  "TextModule",
+                                                                                "internal_title":  "Live Clock",
+                                                                                "position_anchor":  "TOP",
+                                                                                "text_expression":  "$if(gv(clock_24h)=1, df(HH:mm), df(hh:mm))$",
+                                                                                "text_size":  52,
+                                                                                "text_align":  "CENTER",
+                                                                                "paint_color":  "#FFEAF7FF",
+                                                                                "internal_toggles":  {
+                                                                                                         "paint_color":  100,
+                                                                                                         "text_size":  10
+                                                                                                     },
+                                                                                "internal_globals":  {
+                                                                                                         "paint_color":  "accent_color"
+                                                                                                     },
+                                                                                "internal_formulas":  {
+                                                                                                          "text_size":  "$52*mu(min,1,si(rheight)/1290)$"
+                                                                                                      }
+                                                                            },
+                                                                            {
+                                                                                "internal_type":  "TextModule",
+                                                                                "internal_title":  "Live Date",
+                                                                                "position_anchor":  "TOP",
+                                                                                "position_padding_top":  60,
+                                                                                "text_expression":  "$df(EEEE, d MMM)$",
+                                                                                "text_size":  19,
+                                                                                "text_align":  "CENTER",
+                                                                                "paint_color":  "#FFC7E5F5",
+                                                                                "internal_toggles":  {
+                                                                                                         "position_padding_top":  10,
+                                                                                                         "text_size":  10
+                                                                                                     },
+                                                                                "internal_formulas":  {
+                                                                                                          "position_padding_top":  "$60*mu(min,1,si(rheight)/1290)$",
+                                                                                                          "text_size":  "$19*mu(min,1,si(rheight)/1290)$"
+                                                                                                      }
+                                                                            }
+                                                                        ]
+                                                },
+                                                {
+                                                    "internal_type":  "OverlapLayerModule",
+                                                    "internal_title":  "Top Right Status",
+                                                    "position_anchor":  "TOPRIGHT",
+                                                    "position_offset_x":  18,
+                                                    "position_offset_y":  6,
+                                                    "viewgroup_items":  [
+                                                                            {
+                                                                                "internal_type":  "TextModule",
+                                                                                "internal_title":  "Live Status",
+                                                                                "position_anchor":  "TOPRIGHT",
+                                                                                "text_expression":  "$bi(level)$%$if(nc(bt)\u003e0, \"  BT\", \"\")$$if(nc(wifi)=CONNECTED, \"  WIFI\", \"\")$",
+                                                                                "text_size":  15,
+                                                                                "paint_color":  "#B8B8E4F7"
+                                                                            }
+                                                                        ]
+                                                },
+                                                {
+                                                    "internal_type":  "ShapeModule",
+                                                    "internal_title":  "Right Frame Reset Highlight",
+                                                    "position_anchor":  "TOPLEFT",
+                                                    "position_offset_x":  195,
+                                                    "position_offset_y":  264,
+                                                    "shape_type":  "RECT",
+                                                    "shape_width":  495,
+                                                    "shape_height":  910,
+                                                    "paint_color":  "#00000000",
+                                                    "internal_toggles":  {
+                                                                             "position_offset_y":  10,
+                                                                             "shape_height":  10
+                                                                         },
+                                                    "internal_formulas":  {
+                                                                              "position_offset_y":  "$si(rheight)*0.205$",
+                                                                              "shape_height":  "$si(rheight)*0.705$"
+                                                                          },
+                                                    "internal_events":  [
+                                                                            {
+                                                                                "type":  "SINGLE_TAP",
+                                                                                "action":  "SWITCH_GLOBAL",
+                                                                                "switch":  "active_app",
+                                                                                "switch_text":  "none"
+                                                                            }
+                                                                        ]
+                                                },
+                                                {
+                                                    "internal_type":  "OverlapLayerModule",
+                                                    "internal_title":  "Button: Gemini",
+                                                    "position_anchor":  "TOPLEFT",
+                                                    "position_offset_x":  0,
+                                                    "position_offset_y":  216,
+                                                    "internal_toggles":  {
+                                                                             "position_offset_y":  10
+                                                                         },
+                                                    "internal_formulas":  {
+                                                                              "position_offset_y":  "$si(rheight)*0.1674$"
+                                                                          },
+                                                    "internal_events":  [
+                                                                            {
+                                                                                "type":  "SINGLE_TAP",
+                                                                                "action":  "SWITCH_GLOBAL",
+                                                                                "switch":  "active_app",
+                                                                                "switch_text":  "gemini"
+                                                                            },
+                                                                            {
+                                                                                "type":  "SINGLE_TAP",
+                                                                                "action":  "LAUNCH_ACTIVITY",
+                                                                                "intent":  "intent:#Intent;component=com.jeep.klwpdash/com.jeep.klwpdash.launcher.LaunchGeminiActivity;end"
+                                                                            }
+                                                                        ],
+                                                    "viewgroup_items":  [
+                                                                            {
+                                                                                "internal_type":  "BitmapModule",
+                                                                                "internal_title":  "Inactive Card",
+                                                                                "position_anchor":  "CENTER",
+                                                                                "bitmap_bitmap":  "kfile://org.kustom.provider/bitmaps/btn_inactive.png",
+                                                                                "bitmap_width":  148,
+                                                                                "bitmap_alpha":  100,
+                                                                                "internal_toggles":  {
+                                                                                                         "bitmap_width":  10,
+                                                                                                         "bitmap_alpha":  10
+                                                                                                     },
+                                                                                "internal_formulas":  {
+                                                                                                          "bitmap_width":  "$148*mu(min,1,si(rheight)/1290)$",
+                                                                                                          "bitmap_alpha":  "$if(gv(active_app)=gemini, 0, 100)$"
+                                                                                                      }
+                                                                            },
+                                                                            {
+                                                                                "internal_type":  "BitmapModule",
+                                                                                "internal_title":  "Active Glow Card",
+                                                                                "position_anchor":  "CENTER",
+                                                                                "bitmap_bitmap":  "kfile://org.kustom.provider/bitmaps/btn_active_glow.png",
+                                                                                "bitmap_width":  148,
+                                                                                "bitmap_alpha":  0,
+                                                                                "internal_toggles":  {
+                                                                                                         "bitmap_width":  10,
+                                                                                                         "bitmap_alpha":  10
+                                                                                                     },
+                                                                                "internal_formulas":  {
+                                                                                                          "bitmap_width":  "$148*mu(min,1,si(rheight)/1290)$",
+                                                                                                          "bitmap_alpha":  "$if(gv(active_app)=gemini, 100, 0)$"
+                                                                                                      }
+                                                                            },
+                                                                            {
+                                                                                "internal_type":  "BitmapModule",
+                                                                                "internal_title":  "App Icon",
+                                                                                "position_anchor":  "TOP",
+                                                                                "position_padding_top":  28,
+                                                                                "bitmap_bitmap":  "kfile://org.kustom.provider/bitmaps/icon_gemini.png",
+                                                                                "bitmap_width":  80,
+                                                                                "bitmap_alpha":  100,
+                                                                                "internal_toggles":  {
+                                                                                                         "bitmap_width":  10,
+                                                                                                         "position_padding_top":  10
+                                                                                                     },
+                                                                                "internal_formulas":  {
+                                                                                                          "bitmap_width":  "$80*mu(min,1,si(rheight)/1290)$",
+                                                                                                          "position_padding_top":  "$28*mu(min,1,si(rheight)/1290)$"
+                                                                                                      }
+                                                                            },
+                                                                            {
+                                                                                "internal_type":  "TextModule",
+                                                                                "internal_title":  "App Label",
+                                                                                "position_anchor":  "BOTTOM",
+                                                                                "position_padding_bottom":  24,
+                                                                                "text_expression":  "Gemini",
+                                                                                "text_size":  20,
+                                                                                "text_align":  "CENTER",
+                                                                                "paint_color":  "#FFEAF7FF",
+                                                                                "internal_toggles":  {
+                                                                                                         "paint_color":  100,
+                                                                                                         "text_size":  10,
+                                                                                                         "position_padding_bottom":  10
+                                                                                                     },
+                                                                                "internal_globals":  {
+                                                                                                         "paint_color":  "accent_color"
+                                                                                                     },
+                                                                                "internal_formulas":  {
+                                                                                                          "text_size":  "$20*mu(min,1,si(rheight)/1290)$",
+                                                                                                          "position_padding_bottom":  "$24*mu(min,1,si(rheight)/1290)$"
+                                                                                                      }
+                                                                            }
+                                                                        ]
+                                                },
+                                                {
+                                                    "internal_type":  "OverlapLayerModule",
+                                                    "internal_title":  "Active Arrow: Gemini",
+                                                    "position_anchor":  "TOPLEFT",
+                                                    "position_offset_x":  136,
+                                                    "position_offset_y":  216,
+                                                    "internal_toggles":  {
+                                                                             "position_offset_y":  10,
+                                                                             "config_visible":  10
+                                                                         },
+                                                    "internal_formulas":  {
+                                                                              "position_offset_y":  "$si(rheight)*0.1674$",
+                                                                              "config_visible":  "$if(gv(active_app)=gemini, ALWAYS, REMOVE)$"
+                                                                          },
+                                                    "viewgroup_items":  [
+                                                                            {
+                                                                                "internal_type":  "BitmapModule",
+                                                                                "internal_title":  "Cyan Rail Arrow",
+                                                                                "position_anchor":  "CENTER",
+                                                                                "bitmap_bitmap":  "kfile://org.kustom.provider/bitmaps/btn_active_arrow.png",
+                                                                                "bitmap_width":  40,
+                                                                                "bitmap_alpha":  100,
+                                                                                "internal_toggles":  {
+                                                                                                         "bitmap_width":  10
+                                                                                                     },
+                                                                                "internal_formulas":  {
+                                                                                                          "bitmap_width":  "$40*mu(min,1,si(rheight)/1290)$"
+                                                                                                      }
+                                                                            }
+                                                                        ]
+                                                },
+                                                {
+                                                    "internal_type":  "OverlapLayerModule",
+                                                    "internal_title":  "Button: Torque",
+                                                    "position_anchor":  "TOPLEFT",
+                                                    "position_offset_x":  0,
+                                                    "position_offset_y":  381,
+                                                    "internal_toggles":  {
+                                                                             "position_offset_y":  10
+                                                                         },
+                                                    "internal_formulas":  {
+                                                                              "position_offset_y":  "$si(rheight)*0.2953$"
+                                                                          },
+                                                    "internal_events":  [
+                                                                            {
+                                                                                "type":  "SINGLE_TAP",
+                                                                                "action":  "SWITCH_GLOBAL",
+                                                                                "switch":  "active_app",
+                                                                                "switch_text":  "torque"
+                                                                            },
+                                                                            {
+                                                                                "type":  "SINGLE_TAP",
+                                                                                "action":  "LAUNCH_ACTIVITY",
+                                                                                "intent":  "intent:#Intent;component=com.jeep.klwpdash/com.jeep.klwpdash.launcher.LaunchTorqueActivity;end"
+                                                                            }
+                                                                        ],
+                                                    "viewgroup_items":  [
+                                                                            {
+                                                                                "internal_type":  "BitmapModule",
+                                                                                "internal_title":  "Inactive Card",
+                                                                                "position_anchor":  "CENTER",
+                                                                                "bitmap_bitmap":  "kfile://org.kustom.provider/bitmaps/btn_inactive.png",
+                                                                                "bitmap_width":  148,
+                                                                                "bitmap_alpha":  100,
+                                                                                "internal_toggles":  {
+                                                                                                         "bitmap_width":  10,
+                                                                                                         "bitmap_alpha":  10
+                                                                                                     },
+                                                                                "internal_formulas":  {
+                                                                                                          "bitmap_width":  "$148*mu(min,1,si(rheight)/1290)$",
+                                                                                                          "bitmap_alpha":  "$if(gv(active_app)=torque, 0, 100)$"
+                                                                                                      }
+                                                                            },
+                                                                            {
+                                                                                "internal_type":  "BitmapModule",
+                                                                                "internal_title":  "Active Glow Card",
+                                                                                "position_anchor":  "CENTER",
+                                                                                "bitmap_bitmap":  "kfile://org.kustom.provider/bitmaps/btn_active_glow.png",
+                                                                                "bitmap_width":  148,
+                                                                                "bitmap_alpha":  0,
+                                                                                "internal_toggles":  {
+                                                                                                         "bitmap_width":  10,
+                                                                                                         "bitmap_alpha":  10
+                                                                                                     },
+                                                                                "internal_formulas":  {
+                                                                                                          "bitmap_width":  "$148*mu(min,1,si(rheight)/1290)$",
+                                                                                                          "bitmap_alpha":  "$if(gv(active_app)=torque, 100, 0)$"
+                                                                                                      }
+                                                                            },
+                                                                            {
+                                                                                "internal_type":  "BitmapModule",
+                                                                                "internal_title":  "App Icon",
+                                                                                "position_anchor":  "TOP",
+                                                                                "position_padding_top":  28,
+                                                                                "bitmap_bitmap":  "kfile://org.kustom.provider/bitmaps/icon_torque.png",
+                                                                                "bitmap_width":  80,
+                                                                                "bitmap_alpha":  100,
+                                                                                "internal_toggles":  {
+                                                                                                         "bitmap_width":  10,
+                                                                                                         "position_padding_top":  10
+                                                                                                     },
+                                                                                "internal_formulas":  {
+                                                                                                          "bitmap_width":  "$80*mu(min,1,si(rheight)/1290)$",
+                                                                                                          "position_padding_top":  "$28*mu(min,1,si(rheight)/1290)$"
+                                                                                                      }
+                                                                            },
+                                                                            {
+                                                                                "internal_type":  "TextModule",
+                                                                                "internal_title":  "App Label",
+                                                                                "position_anchor":  "BOTTOM",
+                                                                                "position_padding_bottom":  24,
+                                                                                "text_expression":  "Torque",
+                                                                                "text_size":  20,
+                                                                                "text_align":  "CENTER",
+                                                                                "paint_color":  "#FFEAF7FF",
+                                                                                "internal_toggles":  {
+                                                                                                         "paint_color":  100,
+                                                                                                         "text_size":  10,
+                                                                                                         "position_padding_bottom":  10
+                                                                                                     },
+                                                                                "internal_globals":  {
+                                                                                                         "paint_color":  "accent_color"
+                                                                                                     },
+                                                                                "internal_formulas":  {
+                                                                                                          "text_size":  "$20*mu(min,1,si(rheight)/1290)$",
+                                                                                                          "position_padding_bottom":  "$24*mu(min,1,si(rheight)/1290)$"
+                                                                                                      }
+                                                                            }
+                                                                        ]
+                                                },
+                                                {
+                                                    "internal_type":  "OverlapLayerModule",
+                                                    "internal_title":  "Active Arrow: Torque",
+                                                    "position_anchor":  "TOPLEFT",
+                                                    "position_offset_x":  136,
+                                                    "position_offset_y":  381,
+                                                    "internal_toggles":  {
+                                                                             "position_offset_y":  10,
+                                                                             "config_visible":  10
+                                                                         },
+                                                    "internal_formulas":  {
+                                                                              "position_offset_y":  "$si(rheight)*0.2953$",
+                                                                              "config_visible":  "$if(gv(active_app)=torque, ALWAYS, REMOVE)$"
+                                                                          },
+                                                    "viewgroup_items":  [
+                                                                            {
+                                                                                "internal_type":  "BitmapModule",
+                                                                                "internal_title":  "Cyan Rail Arrow",
+                                                                                "position_anchor":  "CENTER",
+                                                                                "bitmap_bitmap":  "kfile://org.kustom.provider/bitmaps/btn_active_arrow.png",
+                                                                                "bitmap_width":  40,
+                                                                                "bitmap_alpha":  100,
+                                                                                "internal_toggles":  {
+                                                                                                         "bitmap_width":  10
+                                                                                                     },
+                                                                                "internal_formulas":  {
+                                                                                                          "bitmap_width":  "$40*mu(min,1,si(rheight)/1290)$"
+                                                                                                      }
+                                                                            }
+                                                                        ]
+                                                },
+                                                {
+                                                    "internal_type":  "OverlapLayerModule",
+                                                    "internal_title":  "Button: Jellyfin",
+                                                    "position_anchor":  "TOPLEFT",
+                                                    "position_offset_x":  0,
+                                                    "position_offset_y":  546,
+                                                    "internal_toggles":  {
+                                                                             "position_offset_y":  10
+                                                                         },
+                                                    "internal_formulas":  {
+                                                                              "position_offset_y":  "$si(rheight)*0.4233$"
+                                                                          },
+                                                    "internal_events":  [
+                                                                            {
+                                                                                "type":  "SINGLE_TAP",
+                                                                                "action":  "SWITCH_GLOBAL",
+                                                                                "switch":  "active_app",
+                                                                                "switch_text":  "jellyfin"
+                                                                            },
+                                                                            {
+                                                                                "type":  "SINGLE_TAP",
+                                                                                "action":  "LAUNCH_ACTIVITY",
+                                                                                "intent":  "intent:#Intent;component=com.jeep.klwpdash/com.jeep.klwpdash.launcher.LaunchJellyfinActivity;end"
+                                                                            }
+                                                                        ],
+                                                    "viewgroup_items":  [
+                                                                            {
+                                                                                "internal_type":  "BitmapModule",
+                                                                                "internal_title":  "Inactive Card",
+                                                                                "position_anchor":  "CENTER",
+                                                                                "bitmap_bitmap":  "kfile://org.kustom.provider/bitmaps/btn_inactive.png",
+                                                                                "bitmap_width":  148,
+                                                                                "bitmap_alpha":  100,
+                                                                                "internal_toggles":  {
+                                                                                                         "bitmap_width":  10,
+                                                                                                         "bitmap_alpha":  10
+                                                                                                     },
+                                                                                "internal_formulas":  {
+                                                                                                          "bitmap_width":  "$148*mu(min,1,si(rheight)/1290)$",
+                                                                                                          "bitmap_alpha":  "$if(gv(active_app)=jellyfin, 0, 100)$"
+                                                                                                      }
+                                                                            },
+                                                                            {
+                                                                                "internal_type":  "BitmapModule",
+                                                                                "internal_title":  "Active Glow Card",
+                                                                                "position_anchor":  "CENTER",
+                                                                                "bitmap_bitmap":  "kfile://org.kustom.provider/bitmaps/btn_active_glow.png",
+                                                                                "bitmap_width":  148,
+                                                                                "bitmap_alpha":  0,
+                                                                                "internal_toggles":  {
+                                                                                                         "bitmap_width":  10,
+                                                                                                         "bitmap_alpha":  10
+                                                                                                     },
+                                                                                "internal_formulas":  {
+                                                                                                          "bitmap_width":  "$148*mu(min,1,si(rheight)/1290)$",
+                                                                                                          "bitmap_alpha":  "$if(gv(active_app)=jellyfin, 100, 0)$"
+                                                                                                      }
+                                                                            },
+                                                                            {
+                                                                                "internal_type":  "BitmapModule",
+                                                                                "internal_title":  "App Icon",
+                                                                                "position_anchor":  "TOP",
+                                                                                "position_padding_top":  28,
+                                                                                "bitmap_bitmap":  "kfile://org.kustom.provider/bitmaps/icon_jellyfin.png",
+                                                                                "bitmap_width":  80,
+                                                                                "bitmap_alpha":  100,
+                                                                                "internal_toggles":  {
+                                                                                                         "bitmap_width":  10,
+                                                                                                         "position_padding_top":  10
+                                                                                                     },
+                                                                                "internal_formulas":  {
+                                                                                                          "bitmap_width":  "$80*mu(min,1,si(rheight)/1290)$",
+                                                                                                          "position_padding_top":  "$28*mu(min,1,si(rheight)/1290)$"
+                                                                                                      }
+                                                                            },
+                                                                            {
+                                                                                "internal_type":  "TextModule",
+                                                                                "internal_title":  "App Label",
+                                                                                "position_anchor":  "BOTTOM",
+                                                                                "position_padding_bottom":  24,
+                                                                                "text_expression":  "Jellyfin",
+                                                                                "text_size":  20,
+                                                                                "text_align":  "CENTER",
+                                                                                "paint_color":  "#FFEAF7FF",
+                                                                                "internal_toggles":  {
+                                                                                                         "paint_color":  100,
+                                                                                                         "text_size":  10,
+                                                                                                         "position_padding_bottom":  10
+                                                                                                     },
+                                                                                "internal_globals":  {
+                                                                                                         "paint_color":  "accent_color"
+                                                                                                     },
+                                                                                "internal_formulas":  {
+                                                                                                          "text_size":  "$20*mu(min,1,si(rheight)/1290)$",
+                                                                                                          "position_padding_bottom":  "$24*mu(min,1,si(rheight)/1290)$"
+                                                                                                      }
+                                                                            }
+                                                                        ]
+                                                },
+                                                {
+                                                    "internal_type":  "OverlapLayerModule",
+                                                    "internal_title":  "Active Arrow: Jellyfin",
+                                                    "position_anchor":  "TOPLEFT",
+                                                    "position_offset_x":  136,
+                                                    "position_offset_y":  546,
+                                                    "internal_toggles":  {
+                                                                             "position_offset_y":  10,
+                                                                             "config_visible":  10
+                                                                         },
+                                                    "internal_formulas":  {
+                                                                              "position_offset_y":  "$si(rheight)*0.4233$",
+                                                                              "config_visible":  "$if(gv(active_app)=jellyfin, ALWAYS, REMOVE)$"
+                                                                          },
+                                                    "viewgroup_items":  [
+                                                                            {
+                                                                                "internal_type":  "BitmapModule",
+                                                                                "internal_title":  "Cyan Rail Arrow",
+                                                                                "position_anchor":  "CENTER",
+                                                                                "bitmap_bitmap":  "kfile://org.kustom.provider/bitmaps/btn_active_arrow.png",
+                                                                                "bitmap_width":  40,
+                                                                                "bitmap_alpha":  100,
+                                                                                "internal_toggles":  {
+                                                                                                         "bitmap_width":  10
+                                                                                                     },
+                                                                                "internal_formulas":  {
+                                                                                                          "bitmap_width":  "$40*mu(min,1,si(rheight)/1290)$"
+                                                                                                      }
+                                                                            }
+                                                                        ]
+                                                },
+                                                {
+                                                    "internal_type":  "OverlapLayerModule",
+                                                    "internal_title":  "Button: Waze",
+                                                    "position_anchor":  "TOPLEFT",
+                                                    "position_offset_x":  0,
+                                                    "position_offset_y":  711,
+                                                    "internal_toggles":  {
+                                                                             "position_offset_y":  10
+                                                                         },
+                                                    "internal_formulas":  {
+                                                                              "position_offset_y":  "$si(rheight)*0.5512$"
+                                                                          },
+                                                    "internal_events":  [
+                                                                            {
+                                                                                "type":  "SINGLE_TAP",
+                                                                                "action":  "SWITCH_GLOBAL",
+                                                                                "switch":  "active_app",
+                                                                                "switch_text":  "waze"
+                                                                            },
+                                                                            {
+                                                                                "type":  "SINGLE_TAP",
+                                                                                "action":  "LAUNCH_ACTIVITY",
+                                                                                "intent":  "intent:#Intent;component=com.jeep.klwpdash/com.jeep.klwpdash.launcher.LaunchWazeActivity;end"
+                                                                            }
+                                                                        ],
+                                                    "viewgroup_items":  [
+                                                                            {
+                                                                                "internal_type":  "BitmapModule",
+                                                                                "internal_title":  "Inactive Card",
+                                                                                "position_anchor":  "CENTER",
+                                                                                "bitmap_bitmap":  "kfile://org.kustom.provider/bitmaps/btn_inactive.png",
+                                                                                "bitmap_width":  148,
+                                                                                "bitmap_alpha":  100,
+                                                                                "internal_toggles":  {
+                                                                                                         "bitmap_width":  10,
+                                                                                                         "bitmap_alpha":  10
+                                                                                                     },
+                                                                                "internal_formulas":  {
+                                                                                                          "bitmap_width":  "$148*mu(min,1,si(rheight)/1290)$",
+                                                                                                          "bitmap_alpha":  "$if(gv(active_app)=waze, 0, 100)$"
+                                                                                                      }
+                                                                            },
+                                                                            {
+                                                                                "internal_type":  "BitmapModule",
+                                                                                "internal_title":  "Active Glow Card",
+                                                                                "position_anchor":  "CENTER",
+                                                                                "bitmap_bitmap":  "kfile://org.kustom.provider/bitmaps/btn_active_glow.png",
+                                                                                "bitmap_width":  148,
+                                                                                "bitmap_alpha":  0,
+                                                                                "internal_toggles":  {
+                                                                                                         "bitmap_width":  10,
+                                                                                                         "bitmap_alpha":  10
+                                                                                                     },
+                                                                                "internal_formulas":  {
+                                                                                                          "bitmap_width":  "$148*mu(min,1,si(rheight)/1290)$",
+                                                                                                          "bitmap_alpha":  "$if(gv(active_app)=waze, 100, 0)$"
+                                                                                                      }
+                                                                            },
+                                                                            {
+                                                                                "internal_type":  "BitmapModule",
+                                                                                "internal_title":  "App Icon",
+                                                                                "position_anchor":  "TOP",
+                                                                                "position_padding_top":  28,
+                                                                                "bitmap_bitmap":  "kfile://org.kustom.provider/bitmaps/icon_waze.png",
+                                                                                "bitmap_width":  80,
+                                                                                "bitmap_alpha":  100,
+                                                                                "internal_toggles":  {
+                                                                                                         "bitmap_width":  10,
+                                                                                                         "position_padding_top":  10
+                                                                                                     },
+                                                                                "internal_formulas":  {
+                                                                                                          "bitmap_width":  "$80*mu(min,1,si(rheight)/1290)$",
+                                                                                                          "position_padding_top":  "$28*mu(min,1,si(rheight)/1290)$"
+                                                                                                      }
+                                                                            },
+                                                                            {
+                                                                                "internal_type":  "TextModule",
+                                                                                "internal_title":  "App Label",
+                                                                                "position_anchor":  "BOTTOM",
+                                                                                "position_padding_bottom":  24,
+                                                                                "text_expression":  "Waze",
+                                                                                "text_size":  20,
+                                                                                "text_align":  "CENTER",
+                                                                                "paint_color":  "#FFEAF7FF",
+                                                                                "internal_toggles":  {
+                                                                                                         "paint_color":  100,
+                                                                                                         "text_size":  10,
+                                                                                                         "position_padding_bottom":  10
+                                                                                                     },
+                                                                                "internal_globals":  {
+                                                                                                         "paint_color":  "accent_color"
+                                                                                                     },
+                                                                                "internal_formulas":  {
+                                                                                                          "text_size":  "$20*mu(min,1,si(rheight)/1290)$",
+                                                                                                          "position_padding_bottom":  "$24*mu(min,1,si(rheight)/1290)$"
+                                                                                                      }
+                                                                            }
+                                                                        ]
+                                                },
+                                                {
+                                                    "internal_type":  "OverlapLayerModule",
+                                                    "internal_title":  "Active Arrow: Waze",
+                                                    "position_anchor":  "TOPLEFT",
+                                                    "position_offset_x":  136,
+                                                    "position_offset_y":  711,
+                                                    "internal_toggles":  {
+                                                                             "position_offset_y":  10,
+                                                                             "config_visible":  10
+                                                                         },
+                                                    "internal_formulas":  {
+                                                                              "position_offset_y":  "$si(rheight)*0.5512$",
+                                                                              "config_visible":  "$if(gv(active_app)=waze, ALWAYS, REMOVE)$"
+                                                                          },
+                                                    "viewgroup_items":  [
+                                                                            {
+                                                                                "internal_type":  "BitmapModule",
+                                                                                "internal_title":  "Cyan Rail Arrow",
+                                                                                "position_anchor":  "CENTER",
+                                                                                "bitmap_bitmap":  "kfile://org.kustom.provider/bitmaps/btn_active_arrow.png",
+                                                                                "bitmap_width":  40,
+                                                                                "bitmap_alpha":  100,
+                                                                                "internal_toggles":  {
+                                                                                                         "bitmap_width":  10
+                                                                                                     },
+                                                                                "internal_formulas":  {
+                                                                                                          "bitmap_width":  "$40*mu(min,1,si(rheight)/1290)$"
+                                                                                                      }
+                                                                            }
+                                                                        ]
+                                                },
+                                                {
+                                                    "internal_type":  "OverlapLayerModule",
+                                                    "internal_title":  "Button: YouTube",
+                                                    "position_anchor":  "TOPLEFT",
+                                                    "position_offset_x":  0,
+                                                    "position_offset_y":  876,
+                                                    "internal_toggles":  {
+                                                                             "position_offset_y":  10
+                                                                         },
+                                                    "internal_formulas":  {
+                                                                              "position_offset_y":  "$si(rheight)*0.6791$"
+                                                                          },
+                                                    "internal_events":  [
+                                                                            {
+                                                                                "type":  "SINGLE_TAP",
+                                                                                "action":  "SWITCH_GLOBAL",
+                                                                                "switch":  "active_app",
+                                                                                "switch_text":  "youtube"
+                                                                            },
+                                                                            {
+                                                                                "type":  "SINGLE_TAP",
+                                                                                "action":  "LAUNCH_ACTIVITY",
+                                                                                "intent":  "intent:#Intent;component=com.jeep.klwpdash/com.jeep.klwpdash.launcher.LaunchYouTubeActivity;end"
+                                                                            }
+                                                                        ],
+                                                    "viewgroup_items":  [
+                                                                            {
+                                                                                "internal_type":  "BitmapModule",
+                                                                                "internal_title":  "Inactive Card",
+                                                                                "position_anchor":  "CENTER",
+                                                                                "bitmap_bitmap":  "kfile://org.kustom.provider/bitmaps/btn_inactive.png",
+                                                                                "bitmap_width":  148,
+                                                                                "bitmap_alpha":  100,
+                                                                                "internal_toggles":  {
+                                                                                                         "bitmap_width":  10,
+                                                                                                         "bitmap_alpha":  10
+                                                                                                     },
+                                                                                "internal_formulas":  {
+                                                                                                          "bitmap_width":  "$148*mu(min,1,si(rheight)/1290)$",
+                                                                                                          "bitmap_alpha":  "$if(gv(active_app)=youtube, 0, 100)$"
+                                                                                                      }
+                                                                            },
+                                                                            {
+                                                                                "internal_type":  "BitmapModule",
+                                                                                "internal_title":  "Active Glow Card",
+                                                                                "position_anchor":  "CENTER",
+                                                                                "bitmap_bitmap":  "kfile://org.kustom.provider/bitmaps/btn_active_glow.png",
+                                                                                "bitmap_width":  148,
+                                                                                "bitmap_alpha":  0,
+                                                                                "internal_toggles":  {
+                                                                                                         "bitmap_width":  10,
+                                                                                                         "bitmap_alpha":  10
+                                                                                                     },
+                                                                                "internal_formulas":  {
+                                                                                                          "bitmap_width":  "$148*mu(min,1,si(rheight)/1290)$",
+                                                                                                          "bitmap_alpha":  "$if(gv(active_app)=youtube, 100, 0)$"
+                                                                                                      }
+                                                                            },
+                                                                            {
+                                                                                "internal_type":  "BitmapModule",
+                                                                                "internal_title":  "App Icon",
+                                                                                "position_anchor":  "TOP",
+                                                                                "position_padding_top":  28,
+                                                                                "bitmap_bitmap":  "kfile://org.kustom.provider/bitmaps/icon_youtube.png",
+                                                                                "bitmap_width":  80,
+                                                                                "bitmap_alpha":  100,
+                                                                                "internal_toggles":  {
+                                                                                                         "bitmap_width":  10,
+                                                                                                         "position_padding_top":  10
+                                                                                                     },
+                                                                                "internal_formulas":  {
+                                                                                                          "bitmap_width":  "$80*mu(min,1,si(rheight)/1290)$",
+                                                                                                          "position_padding_top":  "$28*mu(min,1,si(rheight)/1290)$"
+                                                                                                      }
+                                                                            },
+                                                                            {
+                                                                                "internal_type":  "TextModule",
+                                                                                "internal_title":  "App Label",
+                                                                                "position_anchor":  "BOTTOM",
+                                                                                "position_padding_bottom":  24,
+                                                                                "text_expression":  "YouTube",
+                                                                                "text_size":  20,
+                                                                                "text_align":  "CENTER",
+                                                                                "paint_color":  "#FFEAF7FF",
+                                                                                "internal_toggles":  {
+                                                                                                         "paint_color":  100,
+                                                                                                         "text_size":  10,
+                                                                                                         "position_padding_bottom":  10
+                                                                                                     },
+                                                                                "internal_globals":  {
+                                                                                                         "paint_color":  "accent_color"
+                                                                                                     },
+                                                                                "internal_formulas":  {
+                                                                                                          "text_size":  "$20*mu(min,1,si(rheight)/1290)$",
+                                                                                                          "position_padding_bottom":  "$24*mu(min,1,si(rheight)/1290)$"
+                                                                                                      }
+                                                                            }
+                                                                        ]
+                                                },
+                                                {
+                                                    "internal_type":  "OverlapLayerModule",
+                                                    "internal_title":  "Active Arrow: YouTube",
+                                                    "position_anchor":  "TOPLEFT",
+                                                    "position_offset_x":  136,
+                                                    "position_offset_y":  876,
+                                                    "internal_toggles":  {
+                                                                             "position_offset_y":  10,
+                                                                             "config_visible":  10
+                                                                         },
+                                                    "internal_formulas":  {
+                                                                              "position_offset_y":  "$si(rheight)*0.6791$",
+                                                                              "config_visible":  "$if(gv(active_app)=youtube, ALWAYS, REMOVE)$"
+                                                                          },
+                                                    "viewgroup_items":  [
+                                                                            {
+                                                                                "internal_type":  "BitmapModule",
+                                                                                "internal_title":  "Cyan Rail Arrow",
+                                                                                "position_anchor":  "CENTER",
+                                                                                "bitmap_bitmap":  "kfile://org.kustom.provider/bitmaps/btn_active_arrow.png",
+                                                                                "bitmap_width":  40,
+                                                                                "bitmap_alpha":  100,
+                                                                                "internal_toggles":  {
+                                                                                                         "bitmap_width":  10
+                                                                                                     },
+                                                                                "internal_formulas":  {
+                                                                                                          "bitmap_width":  "$40*mu(min,1,si(rheight)/1290)$"
+                                                                                                      }
+                                                                            }
+                                                                        ]
+                                                },
+                                                {
+                                                    "internal_type":  "OverlapLayerModule",
+                                                    "internal_title":  "Button: YouTube Music",
+                                                    "position_anchor":  "TOPLEFT",
+                                                    "position_offset_x":  0,
+                                                    "position_offset_y":  1041,
+                                                    "internal_toggles":  {
+                                                                             "position_offset_y":  10
+                                                                         },
+                                                    "internal_formulas":  {
+                                                                              "position_offset_y":  "$si(rheight)*0.807$"
+                                                                          },
+                                                    "internal_events":  [
+                                                                            {
+                                                                                "type":  "SINGLE_TAP",
+                                                                                "action":  "SWITCH_GLOBAL",
+                                                                                "switch":  "active_app",
+                                                                                "switch_text":  "ytmusic"
+                                                                            },
+                                                                            {
+                                                                                "type":  "SINGLE_TAP",
+                                                                                "action":  "LAUNCH_ACTIVITY",
+                                                                                "intent":  "intent:#Intent;component=com.jeep.klwpdash/com.jeep.klwpdash.launcher.LaunchYouTubeMusicActivity;end"
+                                                                            }
+                                                                        ],
+                                                    "viewgroup_items":  [
+                                                                            {
+                                                                                "internal_type":  "BitmapModule",
+                                                                                "internal_title":  "Inactive Card",
+                                                                                "position_anchor":  "CENTER",
+                                                                                "bitmap_bitmap":  "kfile://org.kustom.provider/bitmaps/btn_inactive.png",
+                                                                                "bitmap_width":  148,
+                                                                                "bitmap_alpha":  100,
+                                                                                "internal_toggles":  {
+                                                                                                         "bitmap_width":  10,
+                                                                                                         "bitmap_alpha":  10
+                                                                                                     },
+                                                                                "internal_formulas":  {
+                                                                                                          "bitmap_width":  "$148*mu(min,1,si(rheight)/1290)$",
+                                                                                                          "bitmap_alpha":  "$if(gv(active_app)=ytmusic, 0, 100)$"
+                                                                                                      }
+                                                                            },
+                                                                            {
+                                                                                "internal_type":  "BitmapModule",
+                                                                                "internal_title":  "Active Glow Card",
+                                                                                "position_anchor":  "CENTER",
+                                                                                "bitmap_bitmap":  "kfile://org.kustom.provider/bitmaps/btn_active_glow.png",
+                                                                                "bitmap_width":  148,
+                                                                                "bitmap_alpha":  0,
+                                                                                "internal_toggles":  {
+                                                                                                         "bitmap_width":  10,
+                                                                                                         "bitmap_alpha":  10
+                                                                                                     },
+                                                                                "internal_formulas":  {
+                                                                                                          "bitmap_width":  "$148*mu(min,1,si(rheight)/1290)$",
+                                                                                                          "bitmap_alpha":  "$if(gv(active_app)=ytmusic, 100, 0)$"
+                                                                                                      }
+                                                                            },
+                                                                            {
+                                                                                "internal_type":  "BitmapModule",
+                                                                                "internal_title":  "App Icon",
+                                                                                "position_anchor":  "TOP",
+                                                                                "position_padding_top":  22,
+                                                                                "bitmap_bitmap":  "kfile://org.kustom.provider/bitmaps/icon_ytmusic.png",
+                                                                                "bitmap_width":  74,
+                                                                                "bitmap_alpha":  100,
+                                                                                "internal_toggles":  {
+                                                                                                         "bitmap_width":  10,
+                                                                                                         "position_padding_top":  10
+                                                                                                     },
+                                                                                "internal_formulas":  {
+                                                                                                          "bitmap_width":  "$74*mu(min,1,si(rheight)/1290)$",
+                                                                                                          "position_padding_top":  "$22*mu(min,1,si(rheight)/1290)$"
+                                                                                                      }
+                                                                            },
+                                                                            {
+                                                                                "internal_type":  "TextModule",
+                                                                                "internal_title":  "App Label",
+                                                                                "position_anchor":  "BOTTOM",
+                                                                                "position_padding_bottom":  18,
+                                                                                "text_expression":  "YouTube\nMusic",
+                                                                                "text_size":  17,
+                                                                                "text_align":  "CENTER",
+                                                                                "paint_color":  "#FFEAF7FF",
+                                                                                "internal_toggles":  {
+                                                                                                         "paint_color":  100,
+                                                                                                         "text_size":  10,
+                                                                                                         "position_padding_bottom":  10
+                                                                                                     },
+                                                                                "internal_globals":  {
+                                                                                                         "paint_color":  "accent_color"
+                                                                                                     },
+                                                                                "internal_formulas":  {
+                                                                                                          "text_size":  "$17*mu(min,1,si(rheight)/1290)$",
+                                                                                                          "position_padding_bottom":  "$18*mu(min,1,si(rheight)/1290)$"
+                                                                                                      }
+                                                                            }
+                                                                        ]
+                                                },
+                                                {
+                                                    "internal_type":  "OverlapLayerModule",
+                                                    "internal_title":  "Active Arrow: YouTube Music",
+                                                    "position_anchor":  "TOPLEFT",
+                                                    "position_offset_x":  136,
+                                                    "position_offset_y":  1041,
+                                                    "internal_toggles":  {
+                                                                             "position_offset_y":  10,
+                                                                             "config_visible":  10
+                                                                         },
+                                                    "internal_formulas":  {
+                                                                              "position_offset_y":  "$si(rheight)*0.807$",
+                                                                              "config_visible":  "$if(gv(active_app)=ytmusic, ALWAYS, REMOVE)$"
+                                                                          },
+                                                    "viewgroup_items":  [
+                                                                            {
+                                                                                "internal_type":  "BitmapModule",
+                                                                                "internal_title":  "Cyan Rail Arrow",
+                                                                                "position_anchor":  "CENTER",
+                                                                                "bitmap_bitmap":  "kfile://org.kustom.provider/bitmaps/btn_active_arrow.png",
+                                                                                "bitmap_width":  40,
+                                                                                "bitmap_alpha":  100,
+                                                                                "internal_toggles":  {
+                                                                                                         "bitmap_width":  10
+                                                                                                     },
+                                                                                "internal_formulas":  {
+                                                                                                          "bitmap_width":  "$40*mu(min,1,si(rheight)/1290)$"
+                                                                                                      }
+                                                                            }
+                                                                        ]
+                                                }
+                                            ]
+                    }
+}

@@ -1,0 +1,379 @@
+<?xml version="1.0" encoding="utf-8"?>
+<ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="@color/hud_bg"
+    android:fillViewport="true">
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        android:padding="16dp">
+
+        <!-- Header Card -->
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:background="@drawable/bg_hud_card"
+            android:orientation="vertical"
+            android:padding="16dp">
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="JEEP HUD DASHBOARD"
+                android:textColor="@color/hud_cyan"
+                android:textSize="22sp"
+                android:textStyle="bold"
+                android:letterSpacing="0.08" />
+
+            <TextView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="4dp"
+                android:text="KLWP Live Wallpaper + Floating Apps Window Integration + Gemini Voice + YouTube Music → Audio Glow"
+                android:textColor="@color/hud_text_secondary"
+                android:textSize="13sp" />
+
+            <ImageView
+                android:id="@+id/ivPresetPreview"
+                android:layout_width="match_parent"
+                android:layout_height="260dp"
+                android:layout_marginTop="12dp"
+                android:scaleType="fitCenter"
+                android:contentDescription="Jeep HUD Dashboard Preview" />
+
+            <com.google.android.material.button.MaterialButton
+                android:id="@+id/btnApplyKlwp"
+                android:layout_width="match_parent"
+                android:layout_height="52dp"
+                android:layout_marginTop="12dp"
+                android:text="LOAD DASHBOARD IN KLWP"
+                android:textColor="@color/hud_bg"
+                android:textStyle="bold"
+                app:backgroundTint="@color/hud_cyan"
+                app:cornerRadius="10dp" />
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="8dp"
+                android:orientation="horizontal">
+
+                <com.google.android.material.button.MaterialButton
+                    android:id="@+id/btnExportKlwp"
+                    style="@style/Widget.MaterialComponents.Button.OutlinedButton"
+                    android:layout_width="0dp"
+                    android:layout_height="44dp"
+                    android:layout_weight="1"
+                    android:layout_marginEnd="6dp"
+                    android:text="Export .klwp"
+                    android:textColor="@color/hud_cyan"
+                    app:strokeColor="@color/hud_cyan"
+                    app:cornerRadius="8dp" />
+
+                <com.google.android.material.button.MaterialButton
+                    android:id="@+id/btnOpenFloatingApps"
+                    style="@style/Widget.MaterialComponents.Button.OutlinedButton"
+                    android:layout_width="0dp"
+                    android:layout_height="44dp"
+                    android:layout_weight="1"
+                    android:layout_marginStart="6dp"
+                    android:text="Floating Apps"
+                    android:textColor="@color/hud_amber"
+                    app:strokeColor="@color/hud_amber"
+                    app:cornerRadius="8dp" />
+            </LinearLayout>
+
+            <TextView
+                android:id="@+id/tvCoreStatus"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="10dp"
+                android:textColor="@color/hud_text_secondary"
+                android:textSize="12sp" />
+        </LinearLayout>
+
+        <!-- Card 2: Floating Apps & Windowed Launching -->
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="14dp"
+            android:background="@drawable/bg_hud_card"
+            android:orientation="vertical"
+            android:padding="16dp">
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="FLOATING APPS &amp; SIDEBAR LAUNCHERS"
+                android:textColor="@color/hud_cyan"
+                android:textSize="15sp"
+                android:textStyle="bold" />
+
+            <TextView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="4dp"
+                android:text="Apps open inside the right HUD window using Floating Apps (4.29+ Free-Form Mode) or native Android Freeform bounds. Tap Link FA to bind a Floating Apps shortcut directly."
+                android:textColor="@color/hud_text_secondary"
+                android:textSize="12sp" />
+
+            <Spinner
+                android:id="@+id/spWindowMode"
+                android:layout_width="match_parent"
+                android:layout_height="44dp"
+                android:layout_marginTop="10dp"
+                android:backgroundTint="@color/hud_cyan" />
+
+            <com.google.android.material.button.MaterialButton
+                android:id="@+id/btnDevOptions"
+                style="@style/Widget.MaterialComponents.Button.OutlinedButton"
+                android:layout_width="match_parent"
+                android:layout_height="40dp"
+                android:layout_marginTop="8dp"
+                android:text="Open Developer Options (Enable Freeform Windows)"
+                android:textColor="@color/hud_text_primary"
+                android:textSize="12sp"
+                app:strokeColor="@color/hud_card_border"
+                app:cornerRadius="8dp" />
+
+            <LinearLayout
+                android:id="@+id/containerAppBindings"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="10dp"
+                android:orientation="vertical" />
+        </LinearLayout>
+
+        <!-- Card 3: YouTube Music -> Audio Glow -->
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="14dp"
+            android:background="@drawable/bg_hud_card"
+            android:orientation="vertical"
+            android:padding="16dp">
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="YOUTUBE MUSIC → AUDIO GLOW"
+                android:textColor="@color/hud_cyan"
+                android:textSize="15sp"
+                android:textStyle="bold" />
+
+            <com.google.android.material.switchmaterial.SwitchMaterial
+                android:id="@+id/swAutoAudioGlow"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="8dp"
+                android:text="Open Audio Glow automatically whenever YouTube Music opens"
+                android:textColor="@color/hud_text_primary"
+                android:textSize="13sp" />
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="8dp"
+                android:text="Audio Glow Window Layout:"
+                android:textColor="@color/hud_text_secondary"
+                android:textSize="12sp" />
+
+            <Spinner
+                android:id="@+id/spAudioGlowLayout"
+                android:layout_width="match_parent"
+                android:layout_height="44dp"
+                android:layout_marginTop="4dp"
+                android:backgroundTint="@color/hud_cyan" />
+
+            <TextView
+                android:id="@+id/tvAccessibilityStatus"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="8dp"
+                android:textColor="@color/hud_text_secondary"
+                android:textSize="12sp" />
+
+            <com.google.android.material.button.MaterialButton
+                android:id="@+id/btnEnableAccessibility"
+                style="@style/Widget.MaterialComponents.Button.OutlinedButton"
+                android:layout_width="match_parent"
+                android:layout_height="42dp"
+                android:layout_marginTop="6dp"
+                android:text="Enable Background YouTube Music Monitor"
+                android:textColor="@color/hud_cyan"
+                app:strokeColor="@color/hud_cyan"
+                app:cornerRadius="8dp" />
+        </LinearLayout>
+
+        <!-- Card 4: Gemini Voice Conversation -->
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="14dp"
+            android:background="@drawable/bg_hud_card"
+            android:orientation="vertical"
+            android:padding="16dp">
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="GEMINI VOICE CONVERSATION"
+                android:textColor="@color/hud_cyan"
+                android:textSize="15sp"
+                android:textStyle="bold" />
+
+            <TextView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="4dp"
+                android:text="Set Google Gemini as your stereo's default digital assistant for instant hands-free voice conversations."
+                android:textColor="@color/hud_text_secondary"
+                android:textSize="12sp" />
+
+            <Spinner
+                android:id="@+id/spGeminiMode"
+                android:layout_width="match_parent"
+                android:layout_height="44dp"
+                android:layout_marginTop="8dp"
+                android:backgroundTint="@color/hud_cyan" />
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="8dp"
+                android:orientation="horizontal">
+
+                <com.google.android.material.button.MaterialButton
+                    android:id="@+id/btnTestGemini"
+                    android:layout_width="0dp"
+                    android:layout_height="42dp"
+                    android:layout_weight="1"
+                    android:layout_marginEnd="6dp"
+                    android:text="Test Gemini"
+                    android:textColor="@color/hud_bg"
+                    app:backgroundTint="@color/hud_cyan"
+                    app:cornerRadius="8dp" />
+
+                <com.google.android.material.button.MaterialButton
+                    android:id="@+id/btnAssistantSettings"
+                    style="@style/Widget.MaterialComponents.Button.OutlinedButton"
+                    android:layout_width="0dp"
+                    android:layout_height="42dp"
+                    android:layout_weight="1"
+                    android:layout_marginStart="6dp"
+                    android:text="Default Assistant"
+                    android:textColor="@color/hud_text_primary"
+                    app:strokeColor="@color/hud_card_border"
+                    app:cornerRadius="8dp" />
+            </LinearLayout>
+        </LinearLayout>
+
+        <!-- Card 5: HUD Window Bounds Calibration -->
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="14dp"
+            android:layout_marginBottom="20dp"
+            android:background="@drawable/bg_hud_card"
+            android:orientation="vertical"
+            android:padding="16dp">
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="HUD WINDOW FRAME CALIBRATION"
+                android:textColor="@color/hud_cyan"
+                android:textSize="15sp"
+                android:textStyle="bold" />
+
+            <TextView
+                android:id="@+id/tvBoundsSummary"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="4dp"
+                android:textColor="@color/hud_text_secondary"
+                android:textSize="12sp" />
+
+            <TextView
+                android:id="@+id/tvLeftLabel"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="8dp"
+                android:textColor="@color/hud_text_primary"
+                android:textSize="12sp" />
+            <SeekBar
+                android:id="@+id/sbLeft"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:max="60" />
+
+            <TextView
+                android:id="@+id/tvTopLabel"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="6dp"
+                android:textColor="@color/hud_text_primary"
+                android:textSize="12sp" />
+            <SeekBar
+                android:id="@+id/sbTop"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:max="50" />
+
+            <TextView
+                android:id="@+id/tvRightLabel"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="6dp"
+                android:textColor="@color/hud_text_primary"
+                android:textSize="12sp" />
+            <SeekBar
+                android:id="@+id/sbRight"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:max="100" />
+
+            <TextView
+                android:id="@+id/tvBottomLabel"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="6dp"
+                android:textColor="@color/hud_text_primary"
+                android:textSize="12sp" />
+            <SeekBar
+                android:id="@+id/sbBottom"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:max="100" />
+
+            <TextView
+                android:id="@+id/tvSplitLabel"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="6dp"
+                android:textColor="@color/hud_text_primary"
+                android:textSize="12sp" />
+            <SeekBar
+                android:id="@+id/sbSplit"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:max="75" />
+
+            <com.google.android.material.button.MaterialButton
+                android:id="@+id/btnResetBounds"
+                style="@style/Widget.MaterialComponents.Button.OutlinedButton"
+                android:layout_width="wrap_content"
+                android:layout_height="38dp"
+                android:layout_marginTop="10dp"
+                android:text="Reset Frame Defaults"
+                android:textColor="@color/hud_amber"
+                app:strokeColor="@color/hud_amber"
+                app:cornerRadius="8dp" />
+        </LinearLayout>
+
+    </LinearLayout>
+</ScrollView>

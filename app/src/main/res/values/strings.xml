@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">Jeep HUD KLWP</string>
+    <string name="accessibility_service_label">Jeep HUD: YouTube Music → Audio Glow</string>
+    <string name="accessibility_service_description">Detects when YouTube Music opens on your Jeep stereo and automatically launches Audio Glow Music Visualizer in a companion window.</string>
+</resources>

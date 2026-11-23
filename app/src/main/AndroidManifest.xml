@@ -1,0 +1,155 @@
+<?xml version="1.0" encoding="utf-8"?>
+<manifest xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools">
+
+    <!-- Allow discovering installed target apps and Floating Apps on Android 11+ -->
+    <queries>
+        <!-- KLWP -->
+        <package android:name="org.kustom.wallpaper" />
+        <!-- Floating Apps (LWi s.r.o.) -->
+        <package android:name="com.lwi.android.flapps" />
+        <package android:name="com.lwi.android.flappsfull" />
+        <!-- Gemini & Google Assistant -->
+        <package android:name="com.google.android.apps.bard" />
+        <package android:name="com.google.android.googlequicksearchbox" />
+        <!-- Torque Pro & Lite -->
+        <package android:name="org.prowl.torque" />
+        <package android:name="org.prowl.torquefree" />
+        <!-- Jellyfin -->
+        <package android:name="org.jellyfin.mobile" />
+        <package android:name="org.jellyfin.androidtv" />
+        <!-- Waze -->
+        <package android:name="com.waze" />
+        <!-- YouTube -->
+        <package android:name="com.google.android.youtube" />
+        <package android:name="app.revanced.android.youtube" />
+        <package android:name="com.vanced.android.youtube" />
+        <!-- YouTube Music -->
+        <package android:name="com.google.android.apps.youtube.music" />
+        <package android:name="app.revanced.android.apps.youtube.music" />
+        <!-- Audio Glow Music Visualizer (Cypher Cove) -->
+        <package android:name="com.cyphercove.audioglowfs" />
+        <package android:name="com.cyphercove.audioglow" />
+
+        <intent>
+            <action android:name="android.intent.action.VOICE_COMMAND" />
+        </intent>
+        <intent>
+            <action android:name="android.intent.action.ASSIST" />
+        </intent>
+        <intent>
+            <action android:name="android.intent.action.CREATE_SHORTCUT" />
+        </intent>
+    </queries>
+
+    <application
+        android:allowBackup="true"
+        android:icon="@mipmap/ic_launcher"
+        android:roundIcon="@mipmap/ic_launcher"
+        android:label="@string/app_name"
+        android:supportsRtl="true"
+        android:theme="@style/Theme.JeepKlwpDash">
+
+        <!-- Kustom ContentProvider so KLWP discovers Jeep_HUD_Dashboard.klwp in Installed tab -->
+        <provider
+            android:name="org.kustom.api.Provider"
+            android:authorities="${applicationId}.kustom.provider"
+            android:exported="true"
+            tools:ignore="ExportedContentProvider">
+            <intent-filter>
+                <action android:name="org.kustom.provider.WALLPAPERS" />
+            </intent-filter>
+        </provider>
+
+        <!-- Main Companion & Setup Dashboard -->
+        <activity
+            android:name=".MainActivity"
+            android:exported="true"
+            android:label="@string/app_name">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+                <category android:name="android.intent.category.LAUNCHER" />
+                <action android:name="android.intent.action.SET_WALLPAPER" />
+            </intent-filter>
+        </activity>
+
+        <!-- Transparent Trampoline Activities invoked by KLWP sidebar buttons -->
+        <activity
+            android:name=".launcher.LaunchGeminiActivity"
+            android:exported="true"
+            android:excludeFromRecents="true"
+            android:noHistory="true"
+            android:taskAffinity=""
+            android:theme="@style/Theme.JeepKlwpDash.Trampoline"
+            android:label="Jeep HUD: Gemini Voice" />
+
+        <activity
+            android:name=".launcher.LaunchTorqueActivity"
+            android:exported="true"
+            android:excludeFromRecents="true"
+            android:noHistory="true"
+            android:taskAffinity=""
+            android:theme="@style/Theme.JeepKlwpDash.Trampoline"
+            android:label="Jeep HUD: Torque" />
+
+        <activity
+            android:name=".launcher.LaunchJellyfinActivity"
+            android:exported="true"
+            android:excludeFromRecents="true"
+            android:noHistory="true"
+            android:taskAffinity=""
+            android:theme="@style/Theme.JeepKlwpDash.Trampoline"
+            android:label="Jeep HUD: Jellyfin" />
+
+        <activity
+            android:name=".launcher.LaunchWazeActivity"
+            android:exported="true"
+            android:excludeFromRecents="true"
+            android:noHistory="true"
+            android:taskAffinity=""
+            android:theme="@style/Theme.JeepKlwpDash.Trampoline"
+            android:label="Jeep HUD: Waze" />
+
+        <activity
+            android:name=".launcher.LaunchYouTubeActivity"
+            android:exported="true"
+            android:excludeFromRecents="true"
+            android:noHistory="true"
+            android:taskAffinity=""
+            android:theme="@style/Theme.JeepKlwpDash.Trampoline"
+            android:label="Jeep HUD: YouTube" />
+
+        <activity
+            android:name=".launcher.LaunchYouTubeMusicActivity"
+            android:exported="true"
+            android:excludeFromRecents="true"
+            android:noHistory="true"
+            android:taskAffinity=""
+            android:theme="@style/Theme.JeepKlwpDash.Trampoline"
+            android:label="Jeep HUD: YouTube Music + Audio Glow" />
+
+        <activity
+            android:name=".launcher.LaunchAudioGlowActivity"
+            android:exported="true"
+            android:excludeFromRecents="true"
+            android:noHistory="true"
+            android:taskAffinity=""
+            android:theme="@style/Theme.JeepKlwpDash.Trampoline"
+            android:label="Jeep HUD: Audio Glow" />
+
+        <!-- Auto-launch Audio Glow whenever YouTube Music opens from anywhere -->
+        <service
+            android:name=".service.YouTubeMusicMonitorService"
+            android:exported="false"
+            android:label="@string/accessibility_service_label"
+            android:permission="android.permission.BIND_ACCESSIBILITY_SERVICE">
+            <intent-filter>
+                <action android:name="android.accessibilityservice.AccessibilityService" />
+            </intent-filter>
+            <meta-data
+                android:name="android.accessibilityservice"
+                android:resource="@xml/ytm_monitor_accessibility_config" />
+        </service>
+
+    </application>
+</manifest>

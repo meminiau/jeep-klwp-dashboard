@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <style name="Theme.JeepKlwpDash" parent="Theme.MaterialComponents.NoActionBar">
+        <item name="colorPrimary">@color/hud_cyan</item>
+        <item name="colorPrimaryVariant">@color/hud_cyan_dark</item>
+        <item name="colorOnPrimary">@color/hud_bg</item>
+        <item name="colorSecondary">@color/hud_amber</item>
+        <item name="android:textColorPrimary">@color/hud_text_primary</item>
+        <item name="android:textColorSecondary">@color/hud_text_secondary</item>
+        <item name="android:windowBackground">@color/hud_bg</item>
+        <item name="android:statusBarColor">@color/hud_bg</item>
+        <item name="android:navigationBarColor">@color/hud_bg</item>
+    </style>
+
+    <style name="Theme.JeepKlwpDash.Trampoline" parent="@android:style/Theme.Translucent.NoTitleBar">
+        <item name="android:windowBackground">@android:color/transparent</item>
+        <item name="android:windowIsTranslucent">true</item>
+        <item name="android:windowNoTitle">true</item>
+        <item name="android:windowAnimationStyle">@null</item>
+        <item name="android:backgroundDimEnabled">false</item>
+    </style>
+</resources>
