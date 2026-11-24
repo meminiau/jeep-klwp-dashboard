@@ -1,379 +1,331 @@
 <?xml version="1.0" encoding="utf-8"?>
-<ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
+<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:id="@+id/rootHudContainer"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:background="@color/hud_bg"
-    android:fillViewport="true">
+    android:background="@color/hud_bg">
 
-    <LinearLayout
+    <!-- Layer 1: Full-Screen Jeep Cyber HUD Wallpaper Artwork -->
+    <ImageView
+        android:id="@+id/ivHudBackground"
         android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:orientation="vertical"
-        android:padding="16dp">
+        android:layout_height="match_parent"
+        android:contentDescription="@null"
+        android:scaleType="fitXY"
+        android:src="@drawable/bg_jeep_hud" />
 
-        <!-- Header Card -->
-        <LinearLayout
-            android:layout_width="match_parent"
+    <!-- Layer 2: Live HUD Overlay (Clock, Date, Status, Gear Icon, 6 Sidebar Buttons, Frame Area) -->
+    <androidx.constraintlayout.widget.ConstraintLayout
+        android:id="@+id/hudOverlayContainer"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent">
+
+        <androidx.constraintlayout.widget.Guideline
+            android:id="@+id/glClockTop"
+            android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:background="@drawable/bg_hud_card"
+            android:orientation="horizontal"
+            app:layout_constraintGuide_percent="0.028" />
+
+        <androidx.constraintlayout.widget.Guideline
+            android:id="@+id/glClockBottom"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            app:layout_constraintGuide_percent="0.108" />
+
+        <androidx.constraintlayout.widget.Guideline
+            android:id="@+id/glRailArrowEnd"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
             android:orientation="vertical"
-            android:padding="16dp">
+            app:layout_constraintGuide_percent="0.248" />
+
+        <androidx.constraintlayout.widget.Guideline
+            android:id="@+id/glSidebarTop"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            app:layout_constraintGuide_percent="0.165" />
+
+        <androidx.constraintlayout.widget.Guideline
+            android:id="@+id/glSidebarBottom"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            app:layout_constraintGuide_percent="0.945" />
+
+        <androidx.constraintlayout.widget.Guideline
+            android:id="@+id/glFrameStart"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            app:layout_constraintGuide_percent="0.26" />
+
+        <androidx.constraintlayout.widget.Guideline
+            android:id="@+id/glFrameEnd"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            app:layout_constraintGuide_percent="0.96" />
+
+        <androidx.constraintlayout.widget.Guideline
+            android:id="@+id/glFrameTop"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            app:layout_constraintGuide_percent="0.20" />
+
+        <androidx.constraintlayout.widget.Guideline
+            android:id="@+id/glFrameBottom"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            app:layout_constraintGuide_percent="0.91" />
+
+        <!-- Top-Left Live Status (Battery, BT, Wi-Fi) -->
+        <TextView
+            android:id="@+id/tvHudStatus"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="12dp"
+            android:layout_marginTop="8dp"
+            android:letterSpacing="0.04"
+            android:textColor="#B8B8E4F7"
+            android:textSize="11sp"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toTopOf="parent" />
+
+        <!-- Discreet Settings Gear Icon (Top-Right Corner) -->
+        <ImageButton
+            android:id="@+id/btnSettingsGear"
+            android:layout_width="38dp"
+            android:layout_height="38dp"
+            android:layout_marginTop="6dp"
+            android:layout_marginEnd="6dp"
+            android:alpha="0.75"
+            android:background="?attr/selectableItemBackgroundBorderless"
+            android:contentDescription="HUD Settings"
+            android:padding="8dp"
+            android:scaleType="fitCenter"
+            android:src="@drawable/ic_settings_gear"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintTop_toTopOf="parent" />
+
+        <!-- Top HUD Clock & Date Inside Metallic Bezel -->
+        <LinearLayout
+            android:id="@+id/layoutClockBezel"
+            android:layout_width="wrap_content"
+            android:layout_height="0dp"
+            android:gravity="center"
+            android:orientation="vertical"
+            app:layout_constraintBottom_toBottomOf="@id/glClockBottom"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toTopOf="@id/glClockTop">
+
+            <TextView
+                android:id="@+id/tvClock"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:includeFontPadding="false"
+                android:text="03:27"
+                android:textColor="#FFEAF7FF"
+                android:textSize="36sp" />
+
+            <TextView
+                android:id="@+id/tvDate"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="1dp"
+                android:includeFontPadding="false"
+                android:text="Tuesday, 24 Nov"
+                android:textColor="#FFC7E5F5"
+                android:textSize="13sp" />
+        </LinearLayout>
+
+        <!-- Left Sidebar Column: 6 Equal-Weight HUD App Buttons -->
+        <LinearLayout
+            android:id="@+id/sidebarColumn"
+            android:layout_width="0dp"
+            android:layout_height="0dp"
+            android:orientation="vertical"
+            app:layout_constraintBottom_toBottomOf="@id/glSidebarBottom"
+            app:layout_constraintEnd_toEndOf="@id/glRailArrowEnd"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toTopOf="@id/glSidebarTop">
+
+            <include
+                android:id="@+id/btnGemini"
+                layout="@layout/item_hud_sidebar_button" />
+
+            <include
+                android:id="@+id/btnTorque"
+                layout="@layout/item_hud_sidebar_button" />
+
+            <include
+                android:id="@+id/btnJellyfin"
+                layout="@layout/item_hud_sidebar_button" />
+
+            <include
+                android:id="@+id/btnWaze"
+                layout="@layout/item_hud_sidebar_button" />
+
+            <include
+                android:id="@+id/btnYouTube"
+                layout="@layout/item_hud_sidebar_button" />
+
+            <include
+                android:id="@+id/btnYouTubeMusic"
+                layout="@layout/item_hud_sidebar_button" />
+        </LinearLayout>
+
+        <!-- Right-Hand HUD Window Frame Touch Target (tap clears active highlight) -->
+        <View
+            android:id="@+id/viewHudFrameTouch"
+            android:layout_width="0dp"
+            android:layout_height="0dp"
+            android:clickable="true"
+            android:focusable="true"
+            app:layout_constraintBottom_toBottomOf="@id/glFrameBottom"
+            app:layout_constraintEnd_toEndOf="@id/glFrameEnd"
+            app:layout_constraintStart_toStartOf="@id/glFrameStart"
+            app:layout_constraintTop_toTopOf="@id/glFrameTop" />
+
+        <!-- Subtle Bottom Swipe-Up App Drawer Handle -->
+        <LinearLayout
+            android:id="@+id/layoutDrawerHandle"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginBottom="10dp"
+            android:clickable="true"
+            android:focusable="true"
+            android:gravity="center"
+            android:orientation="vertical"
+            android:paddingHorizontal="28dp"
+            android:paddingVertical="6dp"
+            app:layout_constraintBottom_toBottomOf="parent"
+            app:layout_constraintEnd_toEndOf="@id/glFrameEnd"
+            app:layout_constraintStart_toStartOf="@id/glFrameStart">
+
+            <View
+                android:layout_width="44dp"
+                android:layout_height="4dp"
+                android:background="@drawable/bg_drawer_handle" />
 
             <TextView
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="JEEP HUD DASHBOARD"
-                android:textColor="@color/hud_cyan"
-                android:textSize="22sp"
-                android:textStyle="bold"
-                android:letterSpacing="0.08" />
-
-            <TextView
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
                 android:layout_marginTop="4dp"
-                android:text="KLWP Live Wallpaper + Floating Apps Window Integration + Gemini Voice + YouTube Music → Audio Glow"
-                android:textColor="@color/hud_text_secondary"
-                android:textSize="13sp" />
+                android:letterSpacing="0.14"
+                android:text="▲  APPS"
+                android:textColor="#9900E5FF"
+                android:textSize="10sp"
+                android:textStyle="bold" />
+        </LinearLayout>
 
-            <ImageView
-                android:id="@+id/ivPresetPreview"
-                android:layout_width="match_parent"
-                android:layout_height="260dp"
-                android:layout_marginTop="12dp"
-                android:scaleType="fitCenter"
-                android:contentDescription="Jeep HUD Dashboard Preview" />
+    </androidx.constraintlayout.widget.ConstraintLayout>
 
-            <com.google.android.material.button.MaterialButton
-                android:id="@+id/btnApplyKlwp"
-                android:layout_width="match_parent"
-                android:layout_height="52dp"
-                android:layout_marginTop="12dp"
-                android:text="LOAD DASHBOARD IN KLWP"
-                android:textColor="@color/hud_bg"
-                android:textStyle="bold"
-                app:backgroundTint="@color/hud_cyan"
-                app:cornerRadius="10dp" />
+    <!-- Layer 3: Built-In Swipe-Up App Drawer Overlay -->
+    <LinearLayout
+        android:id="@+id/layoutAppDrawer"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:background="@drawable/bg_app_drawer"
+        android:clickable="true"
+        android:focusable="true"
+        android:orientation="vertical"
+        android:visibility="gone">
+
+        <LinearLayout
+            android:id="@+id/layoutDrawerHeader"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:gravity="center_horizontal"
+            android:orientation="vertical"
+            android:paddingHorizontal="16dp"
+            android:paddingTop="12dp"
+            android:paddingBottom="10dp">
+
+            <View
+                android:layout_width="48dp"
+                android:layout_height="4dp"
+                android:background="@drawable/bg_drawer_handle" />
 
             <LinearLayout
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_marginTop="8dp"
+                android:layout_marginTop="10dp"
+                android:gravity="center_vertical"
                 android:orientation="horizontal">
 
-                <com.google.android.material.button.MaterialButton
-                    android:id="@+id/btnExportKlwp"
-                    style="@style/Widget.MaterialComponents.Button.OutlinedButton"
+                <TextView
                     android:layout_width="0dp"
-                    android:layout_height="44dp"
+                    android:layout_height="wrap_content"
                     android:layout_weight="1"
-                    android:layout_marginEnd="6dp"
-                    android:text="Export .klwp"
+                    android:letterSpacing="0.1"
+                    android:text="ALL APPS"
                     android:textColor="@color/hud_cyan"
-                    app:strokeColor="@color/hud_cyan"
-                    app:cornerRadius="8dp" />
+                    android:textSize="17sp"
+                    android:textStyle="bold" />
 
                 <com.google.android.material.button.MaterialButton
-                    android:id="@+id/btnOpenFloatingApps"
+                    android:id="@+id/btnDrawerSettings"
                     style="@style/Widget.MaterialComponents.Button.OutlinedButton"
-                    android:layout_width="0dp"
-                    android:layout_height="44dp"
-                    android:layout_weight="1"
-                    android:layout_marginStart="6dp"
-                    android:text="Floating Apps"
-                    android:textColor="@color/hud_amber"
-                    app:strokeColor="@color/hud_amber"
-                    app:cornerRadius="8dp" />
+                    android:layout_width="wrap_content"
+                    android:layout_height="36dp"
+                    android:layout_marginEnd="6dp"
+                    android:minWidth="0dp"
+                    android:paddingHorizontal="12dp"
+                    android:text="HUD Settings"
+                    android:textColor="@color/hud_cyan"
+                    android:textSize="11sp"
+                    app:cornerRadius="8dp"
+                    app:strokeColor="@color/hud_cyan" />
+
+                <ImageButton
+                    android:id="@+id/btnCloseDrawer"
+                    android:layout_width="38dp"
+                    android:layout_height="38dp"
+                    android:background="?attr/selectableItemBackgroundBorderless"
+                    android:contentDescription="Close App Drawer"
+                    android:padding="7dp"
+                    android:src="@drawable/ic_close" />
             </LinearLayout>
 
-            <TextView
-                android:id="@+id/tvCoreStatus"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layout_marginTop="10dp"
-                android:textColor="@color/hud_text_secondary"
-                android:textSize="12sp" />
-        </LinearLayout>
-
-        <!-- Card 2: Floating Apps & Windowed Launching -->
-        <LinearLayout
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_marginTop="14dp"
-            android:background="@drawable/bg_hud_card"
-            android:orientation="vertical"
-            android:padding="16dp">
-
-            <TextView
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text="FLOATING APPS &amp; SIDEBAR LAUNCHERS"
-                android:textColor="@color/hud_cyan"
-                android:textSize="15sp"
-                android:textStyle="bold" />
-
-            <TextView
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layout_marginTop="4dp"
-                android:text="Apps open inside the right HUD window using Floating Apps (4.29+ Free-Form Mode) or native Android Freeform bounds. Tap Link FA to bind a Floating Apps shortcut directly."
-                android:textColor="@color/hud_text_secondary"
-                android:textSize="12sp" />
-
-            <Spinner
-                android:id="@+id/spWindowMode"
-                android:layout_width="match_parent"
-                android:layout_height="44dp"
-                android:layout_marginTop="10dp"
-                android:backgroundTint="@color/hud_cyan" />
-
-            <com.google.android.material.button.MaterialButton
-                android:id="@+id/btnDevOptions"
-                style="@style/Widget.MaterialComponents.Button.OutlinedButton"
-                android:layout_width="match_parent"
-                android:layout_height="40dp"
-                android:layout_marginTop="8dp"
-                android:text="Open Developer Options (Enable Freeform Windows)"
-                android:textColor="@color/hud_text_primary"
-                android:textSize="12sp"
-                app:strokeColor="@color/hud_card_border"
-                app:cornerRadius="8dp" />
-
-            <LinearLayout
-                android:id="@+id/containerAppBindings"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layout_marginTop="10dp"
-                android:orientation="vertical" />
-        </LinearLayout>
-
-        <!-- Card 3: YouTube Music -> Audio Glow -->
-        <LinearLayout
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_marginTop="14dp"
-            android:background="@drawable/bg_hud_card"
-            android:orientation="vertical"
-            android:padding="16dp">
-
-            <TextView
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text="YOUTUBE MUSIC → AUDIO GLOW"
-                android:textColor="@color/hud_cyan"
-                android:textSize="15sp"
-                android:textStyle="bold" />
-
-            <com.google.android.material.switchmaterial.SwitchMaterial
-                android:id="@+id/swAutoAudioGlow"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layout_marginTop="8dp"
-                android:text="Open Audio Glow automatically whenever YouTube Music opens"
-                android:textColor="@color/hud_text_primary"
-                android:textSize="13sp" />
-
-            <TextView
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_marginTop="8dp"
-                android:text="Audio Glow Window Layout:"
-                android:textColor="@color/hud_text_secondary"
-                android:textSize="12sp" />
-
-            <Spinner
-                android:id="@+id/spAudioGlowLayout"
-                android:layout_width="match_parent"
-                android:layout_height="44dp"
-                android:layout_marginTop="4dp"
-                android:backgroundTint="@color/hud_cyan" />
-
-            <TextView
-                android:id="@+id/tvAccessibilityStatus"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layout_marginTop="8dp"
-                android:textColor="@color/hud_text_secondary"
-                android:textSize="12sp" />
-
-            <com.google.android.material.button.MaterialButton
-                android:id="@+id/btnEnableAccessibility"
-                style="@style/Widget.MaterialComponents.Button.OutlinedButton"
+            <EditText
+                android:id="@+id/etSearchApps"
                 android:layout_width="match_parent"
                 android:layout_height="42dp"
-                android:layout_marginTop="6dp"
-                android:text="Enable Background YouTube Music Monitor"
-                android:textColor="@color/hud_cyan"
-                app:strokeColor="@color/hud_cyan"
-                app:cornerRadius="8dp" />
-        </LinearLayout>
-
-        <!-- Card 4: Gemini Voice Conversation -->
-        <LinearLayout
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_marginTop="14dp"
-            android:background="@drawable/bg_hud_card"
-            android:orientation="vertical"
-            android:padding="16dp">
-
-            <TextView
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text="GEMINI VOICE CONVERSATION"
-                android:textColor="@color/hud_cyan"
-                android:textSize="15sp"
-                android:textStyle="bold" />
-
-            <TextView
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layout_marginTop="4dp"
-                android:text="Set Google Gemini as your stereo's default digital assistant for instant hands-free voice conversations."
-                android:textColor="@color/hud_text_secondary"
-                android:textSize="12sp" />
-
-            <Spinner
-                android:id="@+id/spGeminiMode"
-                android:layout_width="match_parent"
-                android:layout_height="44dp"
-                android:layout_marginTop="8dp"
-                android:backgroundTint="@color/hud_cyan" />
-
-            <LinearLayout
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layout_marginTop="8dp"
-                android:orientation="horizontal">
-
-                <com.google.android.material.button.MaterialButton
-                    android:id="@+id/btnTestGemini"
-                    android:layout_width="0dp"
-                    android:layout_height="42dp"
-                    android:layout_weight="1"
-                    android:layout_marginEnd="6dp"
-                    android:text="Test Gemini"
-                    android:textColor="@color/hud_bg"
-                    app:backgroundTint="@color/hud_cyan"
-                    app:cornerRadius="8dp" />
-
-                <com.google.android.material.button.MaterialButton
-                    android:id="@+id/btnAssistantSettings"
-                    style="@style/Widget.MaterialComponents.Button.OutlinedButton"
-                    android:layout_width="0dp"
-                    android:layout_height="42dp"
-                    android:layout_weight="1"
-                    android:layout_marginStart="6dp"
-                    android:text="Default Assistant"
-                    android:textColor="@color/hud_text_primary"
-                    app:strokeColor="@color/hud_card_border"
-                    app:cornerRadius="8dp" />
-            </LinearLayout>
-        </LinearLayout>
-
-        <!-- Card 5: HUD Window Bounds Calibration -->
-        <LinearLayout
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_marginTop="14dp"
-            android:layout_marginBottom="20dp"
-            android:background="@drawable/bg_hud_card"
-            android:orientation="vertical"
-            android:padding="16dp">
-
-            <TextView
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text="HUD WINDOW FRAME CALIBRATION"
-                android:textColor="@color/hud_cyan"
-                android:textSize="15sp"
-                android:textStyle="bold" />
-
-            <TextView
-                android:id="@+id/tvBoundsSummary"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layout_marginTop="4dp"
-                android:textColor="@color/hud_text_secondary"
-                android:textSize="12sp" />
-
-            <TextView
-                android:id="@+id/tvLeftLabel"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_marginTop="8dp"
-                android:textColor="@color/hud_text_primary"
-                android:textSize="12sp" />
-            <SeekBar
-                android:id="@+id/sbLeft"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:max="60" />
-
-            <TextView
-                android:id="@+id/tvTopLabel"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_marginTop="6dp"
-                android:textColor="@color/hud_text_primary"
-                android:textSize="12sp" />
-            <SeekBar
-                android:id="@+id/sbTop"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:max="50" />
-
-            <TextView
-                android:id="@+id/tvRightLabel"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_marginTop="6dp"
-                android:textColor="@color/hud_text_primary"
-                android:textSize="12sp" />
-            <SeekBar
-                android:id="@+id/sbRight"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:max="100" />
-
-            <TextView
-                android:id="@+id/tvBottomLabel"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_marginTop="6dp"
-                android:textColor="@color/hud_text_primary"
-                android:textSize="12sp" />
-            <SeekBar
-                android:id="@+id/sbBottom"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:max="100" />
-
-            <TextView
-                android:id="@+id/tvSplitLabel"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_marginTop="6dp"
-                android:textColor="@color/hud_text_primary"
-                android:textSize="12sp" />
-            <SeekBar
-                android:id="@+id/sbSplit"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:max="75" />
-
-            <com.google.android.material.button.MaterialButton
-                android:id="@+id/btnResetBounds"
-                style="@style/Widget.MaterialComponents.Button.OutlinedButton"
-                android:layout_width="wrap_content"
-                android:layout_height="38dp"
                 android:layout_marginTop="10dp"
-                android:text="Reset Frame Defaults"
-                android:textColor="@color/hud_amber"
-                app:strokeColor="@color/hud_amber"
-                app:cornerRadius="8dp" />
+                android:background="@drawable/bg_hud_card"
+                android:hint="Search installed apps..."
+                android:imeOptions="actionSearch"
+                android:inputType="text"
+                android:maxLines="1"
+                android:paddingHorizontal="14dp"
+                android:textColor="@color/hud_text_primary"
+                android:textColorHint="@color/hud_text_secondary"
+                android:textSize="14sp" />
+
+            <TextView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="6dp"
+                android:text="Tap to open app  •  Long-press to launch in HUD window"
+                android:textColor="@color/hud_text_secondary"
+                android:textSize="11sp" />
         </LinearLayout>
 
+        <androidx.recyclerview.widget.RecyclerView
+            android:id="@+id/rvAppDrawer"
+            android:layout_width="match_parent"
+            android:layout_height="0dp"
+            android:layout_weight="1"
+            android:clipToPadding="false"
+            android:paddingHorizontal="10dp"
+            android:paddingBottom="24dp" />
     </LinearLayout>
-</ScrollView>
+
+</FrameLayout>

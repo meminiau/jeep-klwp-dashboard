@@ -1,4 +1,4 @@
-name: Build Jeep HUD KLWP APK
+name: Build Jeep HUD Launcher APK
 
 on:
   push:
@@ -33,11 +33,6 @@ jobs:
         with:
           gradle-version: '8.7'
 
-      - name: Verify bundled KLWP preset asset
-        run: |
-          test -f app/src/main/assets/wallpapers/Jeep_HUD_Dashboard.klwp
-          unzip -t app/src/main/assets/wallpapers/Jeep_HUD_Dashboard.klwp
-
       - name: Generate signing keystore
         run: |
           keytool -genkeypair -v \
@@ -49,7 +44,7 @@ jobs:
             -alias jeepdash \
             -storepass jeepklwpdash \
             -keypass jeepklwpdash \
-            -dname "CN=Jeep HUD KLWP, OU=Automotive, O=JeepDash, L=Sydney, S=NSW, C=AU"
+            -dname "CN=Jeep HUD Launcher, OU=Automotive, O=JeepDash, L=Sydney, S=NSW, C=AU"
 
       - name: Build Signed Release APK
         env:
@@ -67,29 +62,31 @@ jobs:
           BUILD_TOOLS_DIR=$(ls -d "$ANDROID_HOME"/build-tools/* | sort -V | tail -n 1)
           "$BUILD_TOOLS_DIR/apksigner" verify --verbose "$APK_PATH"
           mkdir -p dist
+          cp "$APK_PATH" dist/Jeep-HUD-Launcher-v2.0.0.apk
           cp "$APK_PATH" dist/Jeep-HUD-KLWP-Dashboard-v1.0.0.apk
-          cp app/src/main/assets/wallpapers/Jeep_HUD_Dashboard.klwp dist/Jeep_HUD_Dashboard.klwp
           ls -lh dist/
 
       - name: Upload APK artifact
         uses: actions/upload-artifact@v4
         with:
-          name: jeep-hud-klwp-apk
+          name: jeep-hud-launcher-apk
           path: |
+            dist/Jeep-HUD-Launcher-v2.0.0.apk
             dist/Jeep-HUD-KLWP-Dashboard-v1.0.0.apk
-            dist/Jeep_HUD_Dashboard.klwp
 
       - name: Publish GitHub Release with Installable APK
         uses: softprops/action-gh-release@v2
         with:
-          tag_name: v1.0.0
-          name: Jeep HUD KLWP Dashboard v1.0.0
+          tag_name: v2.0.0
+          name: Jeep HUD Launcher v2.0.0
           body: |
-            Installable Android APK for Jeep portrait stereos featuring:
-            - **Cleaned & cropped KLWP HUD wallpaper** (bottom climate control bar removed; live clock, date, and dynamic cyan active button highlight)
-            - **6 interactive sidebar buttons**: **Gemini Voice** (above Torque), **Torque**, **Jellyfin**, **Waze**, **YouTube**, and **YouTube Music**
-            - **Floating Apps (LWi s.r.o.) & Android Freeform Window integration** aligned to the right-hand HUD window frame
-            - **Automatic Audio Glow Music Visualizer launch** whenever YouTube Music opens
+            Standalone full-screen Android Home Launcher APK for Jeep portrait stereos (no KLWP required):
+            - **Full-Screen Live Jeep HUD Home Launcher** (`CATEGORY_HOME` / `CATEGORY_DEFAULT` with `singleTask`, `stateNotNeeded`, `clearTaskOnLaunch`)
+            - **Live Clock, Date & Status Readout** over the cleaned Jeep cyber HUD background (bottom climate control bar removed)
+            - **6 Interactive Sidebar Buttons**: **Gemini Voice** (above Torque), **Torque**, **Jellyfin**, **Waze**, **YouTube**, and **YouTube Music** with dynamic cyan highlight & rail pointer
+            - **Built-In Swipe-Up App Drawer** listing all installed Android apps (tap to launch, long-press to launch inside the HUD window)
+            - **Discreet Top-Right Settings Gear** opening `SettingsActivity` (`Link FA` Floating Apps shortcuts, `Enable Background YouTube Music Monitor`, `Default Assistant`, and HUD window calibration)
+            - **Floating Apps (`com.lwi.android.flapps`) & Android Freeform Window integration** + **Automatic Audio Glow Music Visualizer** whenever YouTube Music opens
           files: |
+            dist/Jeep-HUD-Launcher-v2.0.0.apk
             dist/Jeep-HUD-KLWP-Dashboard-v1.0.0.apk
-            dist/Jeep_HUD_Dashboard.klwp

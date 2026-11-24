@@ -2,10 +2,19 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:tools="http://schemas.android.com/tools">
 
-    <!-- Allow discovering installed target apps and Floating Apps on Android 11+ -->
+    <!-- Launcher package discovery and live HUD status readout -->
+    <uses-permission
+        android:name="android.permission.QUERY_ALL_PACKAGES"
+        tools:ignore="QueryAllPackagesPermission" />
+    <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
+    <uses-permission android:name="android.permission.BLUETOOTH" />
+
+    <!-- Allow discovering installed target apps, launcher apps, and Floating Apps on Android 11+ -->
     <queries>
-        <!-- KLWP -->
-        <package android:name="org.kustom.wallpaper" />
+        <intent>
+            <action android:name="android.intent.action.MAIN" />
+            <category android:name="android.intent.category.LAUNCHER" />
+        </intent>
         <!-- Floating Apps (LWi s.r.o.) -->
         <package android:name="com.lwi.android.flapps" />
         <package android:name="com.lwi.android.flappsfull" />
@@ -50,30 +59,31 @@
         android:supportsRtl="true"
         android:theme="@style/Theme.JeepKlwpDash">
 
-        <!-- Kustom ContentProvider so KLWP discovers Jeep_HUD_Dashboard.klwp in Installed tab -->
-        <provider
-            android:name="org.kustom.api.Provider"
-            android:authorities="${applicationId}.kustom.provider"
-            android:exported="true"
-            tools:ignore="ExportedContentProvider">
-            <intent-filter>
-                <action android:name="org.kustom.provider.WALLPAPERS" />
-            </intent-filter>
-        </provider>
-
-        <!-- Main Companion & Setup Dashboard -->
+        <!-- Main Live Jeep HUD Home Launcher -->
         <activity
             android:name=".MainActivity"
+            android:clearTaskOnLaunch="true"
+            android:configChanges="orientation|screenSize|keyboardHidden"
             android:exported="true"
-            android:label="@string/app_name">
+            android:label="@string/app_name"
+            android:launchMode="singleTask"
+            android:screenOrientation="portrait"
+            android:stateNotNeeded="true">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
+                <category android:name="android.intent.category.HOME" />
+                <category android:name="android.intent.category.DEFAULT" />
                 <category android:name="android.intent.category.LAUNCHER" />
-                <action android:name="android.intent.action.SET_WALLPAPER" />
             </intent-filter>
         </activity>
 
-        <!-- Transparent Trampoline Activities invoked by KLWP sidebar buttons -->
+        <!-- Configuration & Shortcut Binding Settings Screen -->
+        <activity
+            android:name=".SettingsActivity"
+            android:exported="false"
+            android:label="Jeep HUD Settings" />
+
+        <!-- Transparent Trampoline Activities for direct external/shortcut invocation -->
         <activity
             android:name=".launcher.LaunchGeminiActivity"
             android:exported="true"

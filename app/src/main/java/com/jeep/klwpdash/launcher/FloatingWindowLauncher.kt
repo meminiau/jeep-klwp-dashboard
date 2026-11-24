@@ -229,6 +229,39 @@ object FloatingWindowLauncher {
         }
     }
 
+    /**
+     * Launches any installed Android package inside the calibrated right-hand HUD window
+     * (used when long-pressing any app in the built-in App Drawer).
+     */
+    fun launchPackageInWindow(context: Context, packageName: String): Boolean {
+        val appContext = context.applicationContext
+        val prefs = DashPrefs(appContext)
+        val launchIntent = appContext.packageManager.getLaunchIntentForPackage(packageName)
+        if (launchIntent == null) {
+            showToast(appContext, "Cannot launch $packageName.")
+            return false
+        }
+        launchIntent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+        if (prefs.windowMode != WindowMode.STANDARD) {
+            launchIntent.addFlags(Intent.FLAG_ACTIVITY_LAUNCH_ADJACENT)
+            val bounds = computeHudFrameBounds(appContext, prefs)
+            try {
+                appContext.startActivity(launchIntent, buildFreeformOptionsBundle(bounds))
+                return true
+            } catch (e: Exception) {
+                Log.w(TAG, "Freeform launch failed for $packageName, falling back to standard launch", e)
+            }
+        }
+        return try {
+            appContext.startActivity(launchIntent)
+            true
+        } catch (e: Exception) {
+            Log.e(TAG, "Failed to launch $packageName", e)
+            showToast(appContext, "Failed to launch $packageName.")
+            false
+        }
+    }
+
     private fun launchSavedShortcut(context: Context, intentUri: String, bounds: Rect?): Boolean {
         return try {
             val shortcutIntent = Intent.parseUri(intentUri, Intent.URI_INTENT_SCHEME).apply {

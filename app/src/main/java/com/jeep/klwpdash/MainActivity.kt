@@ -1,459 +1,624 @@
 package com.jeep.klwpdash
 
-import android.app.Activity
-import android.content.ComponentName
-import android.content.ContentValues
+import android.bluetooth.BluetoothManager
+import android.content.BroadcastReceiver
+import android.content.Context
 import android.content.Intent
-import android.graphics.BitmapFactory
-import android.net.Uri
+import android.content.IntentFilter
+import android.content.pm.PackageManager
+import android.graphics.drawable.Drawable
+import android.net.ConnectivityManager
+import android.net.NetworkCapabilities
+import android.os.BatteryManager
 import android.os.Build
 import android.os.Bundle
-import android.os.Environment
-import android.provider.MediaStore
-import android.provider.Settings
+import android.os.Handler
+import android.os.Looper
+import android.os.SystemClock
+import android.text.Editable
+import android.text.TextWatcher
 import android.view.LayoutInflater
+import android.view.MotionEvent
 import android.view.View
-import android.widget.AdapterView
-import android.widget.ArrayAdapter
+import android.view.ViewConfiguration
+import android.view.ViewGroup
+import android.view.inputmethod.InputMethodManager
+import android.widget.EditText
+import android.widget.ImageButton
 import android.widget.ImageView
 import android.widget.LinearLayout
-import android.widget.SeekBar
-import android.widget.Spinner
 import android.widget.TextView
 import android.widget.Toast
-import androidx.activity.result.contract.ActivityResultContracts
+import androidx.activity.OnBackPressedCallback
 import androidx.appcompat.app.AppCompatActivity
-import androidx.core.content.ContextCompat
+import androidx.core.view.ViewCompat
+import androidx.core.view.WindowInsetsCompat
+import androidx.recyclerview.widget.GridLayoutManager
+import androidx.recyclerview.widget.RecyclerView
 import com.google.android.material.button.MaterialButton
-import com.google.android.material.switchmaterial.SwitchMaterial
-import com.jeep.klwpdash.data.AudioGlowLayout
 import com.jeep.klwpdash.data.DashApp
 import com.jeep.klwpdash.data.DashPrefs
-import com.jeep.klwpdash.data.GeminiLaunchMode
-import com.jeep.klwpdash.data.WindowMode
 import com.jeep.klwpdash.launcher.FloatingWindowLauncher
-import com.jeep.klwpdash.service.YouTubeMusicMonitorService
-import java.io.File
-import java.io.FileOutputStream
-import java.util.zip.ZipInputStream
+import java.text.SimpleDateFormat
+import java.util.Date
+import java.util.Locale
+import java.util.concurrent.Executors
+import kotlin.math.abs
 
 class MainActivity : AppCompatActivity() {
 
+    private data class SidebarSlot(
+        val app: DashApp,
+        val label: String,
+        val iconRes: Int,
+        val root: View,
+        val cardBg: ImageView,
+        val iconView: ImageView,
+        val labelView: TextView,
+        val arrowView: ImageView
+    )
+
+    private data class DrawerAppItem(
+        val label: String,
+        val packageName: String,
+        val icon: Drawable
+    )
+
     private lateinit var prefs: DashPrefs
-    private var pendingShortcutApp: DashApp? = null
+    private lateinit var hudOverlayContainer: View
+    private lateinit var tvClock: TextView
+    private lateinit var tvDate: TextView
+    private lateinit var tvHudStatus: TextView
+    private lateinit var layoutAppDrawer: LinearLayout
+    private lateinit var layoutDrawerHeader: LinearLayout
+    private lateinit var etSearchApps: EditText
+    private lateinit var rvAppDrawer: RecyclerView
 
-    private lateinit var tvCoreStatus: TextView
-    private lateinit var tvAccessibilityStatus: TextView
-    private lateinit var containerAppBindings: LinearLayout
-    private lateinit var tvBoundsSummary: TextView
-    private lateinit var tvLeftLabel: TextView
-    private lateinit var tvTopLabel: TextView
-    private lateinit var tvRightLabel: TextView
-    private lateinit var tvBottomLabel: TextView
-    private lateinit var tvSplitLabel: TextView
-    private lateinit var sbLeft: SeekBar
-    private lateinit var sbTop: SeekBar
-    private lateinit var sbRight: SeekBar
-    private lateinit var sbBottom: SeekBar
-    private lateinit var sbSplit: SeekBar
+    private val sidebarSlots = mutableListOf<SidebarSlot>()
+    private val drawerAdapter = AppDrawerAdapter()
+    private val allApps = mutableListOf<DrawerAppItem>()
+    private val appLoaderExecutor = Executors.newSingleThreadExecutor()
+    private val mainHandler = Handler(Looper.getMainLooper())
 
-    private val shortcutPickerLauncher = registerForActivityResult(
-        ActivityResultContracts.StartActivityForResult()
-    ) { result ->
-        val targetApp = pendingShortcutApp
-        pendingShortcutApp = null
-        if (result.resultCode == Activity.RESULT_OK && targetApp != null && result.data != null) {
-            @Suppress("DEPRECATION")
-            val shortcutIntent = result.data?.getParcelableExtra<Intent>(Intent.EXTRA_SHORTCUT_INTENT)
-            @Suppress("DEPRECATION")
-            val shortcutName = result.data?.getStringExtra(Intent.EXTRA_SHORTCUT_NAME)
-            if (shortcutIntent != null) {
-                val uri = shortcutIntent.toUri(Intent.URI_INTENT_SCHEME)
-                prefs.setShortcutUri(targetApp, uri, shortcutName ?: "Floating Apps Shortcut")
-                Toast.makeText(
-                    this,
-                    "Linked ${targetApp.displayName} → ${shortcutName ?: "Floating Apps"}",
-                    Toast.LENGTH_SHORT
-                ).show()
-                refreshStatusUi()
-            } else {
-                Toast.makeText(this, "No shortcut returned by Floating Apps.", Toast.LENGTH_SHORT).show()
+    private var isDrawerOpen = false
+    private var touchSlop = 24
+    private var swipeThresholdPx = 90f
+    private var downRawX = 0f
+    private var downRawY = 0f
+    private var swipeHandledForGesture = false
+    private var headerDownRawY = 0f
+
+    private var batteryPct: Int = -1
+
+    private val clockTickRunnable = object : Runnable {
+        override fun run() {
+            updateClockAndStatus()
+            mainHandler.postDelayed(this, 15_000L)
+        }
+    }
+
+    private val systemReceiver = object : BroadcastReceiver() {
+        override fun onReceive(context: Context?, intent: Intent?) {
+            when (intent?.action) {
+                Intent.ACTION_BATTERY_CHANGED -> {
+                    val level = intent.getIntExtra(BatteryManager.EXTRA_LEVEL, -1)
+                    val scale = intent.getIntExtra(BatteryManager.EXTRA_SCALE, 100)
+                    if (level >= 0 && scale > 0) {
+                        batteryPct = (level * 100) / scale
+                    }
+                    updateClockAndStatus()
+                }
+                Intent.ACTION_TIME_TICK,
+                Intent.ACTION_TIME_CHANGED,
+                Intent.ACTION_TIMEZONE_CHANGED,
+                Intent.ACTION_DATE_CHANGED -> updateClockAndStatus()
             }
+        }
+    }
+
+    private val packageChangeReceiver = object : BroadcastReceiver() {
+        override fun onReceive(context: Context?, intent: Intent?) {
+            loadInstalledAppsAsync()
         }
     }
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
+
         prefs = DashPrefs(this)
+        touchSlop = ViewConfiguration.get(this).scaledTouchSlop
+        swipeThresholdPx = 48f * resources.displayMetrics.density
 
-        tvCoreStatus = findViewById(R.id.tvCoreStatus)
-        tvAccessibilityStatus = findViewById(R.id.tvAccessibilityStatus)
-        containerAppBindings = findViewById(R.id.containerAppBindings)
-        tvBoundsSummary = findViewById(R.id.tvBoundsSummary)
-        tvLeftLabel = findViewById(R.id.tvLeftLabel)
-        tvTopLabel = findViewById(R.id.tvTopLabel)
-        tvRightLabel = findViewById(R.id.tvRightLabel)
-        tvBottomLabel = findViewById(R.id.tvBottomLabel)
-        tvSplitLabel = findViewById(R.id.tvSplitLabel)
-        sbLeft = findViewById(R.id.sbLeft)
-        sbTop = findViewById(R.id.sbTop)
-        sbRight = findViewById(R.id.sbRight)
-        sbBottom = findViewById(R.id.sbBottom)
-        sbSplit = findViewById(R.id.sbSplit)
+        hudOverlayContainer = findViewById(R.id.hudOverlayContainer)
+        tvClock = findViewById(R.id.tvClock)
+        tvDate = findViewById(R.id.tvDate)
+        tvHudStatus = findViewById(R.id.tvHudStatus)
+        layoutAppDrawer = findViewById(R.id.layoutAppDrawer)
+        layoutDrawerHeader = findViewById(R.id.layoutDrawerHeader)
+        etSearchApps = findViewById(R.id.etSearchApps)
+        rvAppDrawer = findViewById(R.id.rvAppDrawer)
 
-        loadPresetPreviewThumbnail()
-        setupHeaderActions()
-        setupSpinnersAndSwitches()
-        setupBoundsControls()
+        applySystemBarInsets()
+        setupSidebarButtons()
+        setupHudInteractions()
+        setupAppDrawer()
+        setupBackBehavior()
+        registerReceivers()
+
+        restoreActiveHighlight()
+        updateClockAndStatus()
+        loadInstalledAppsAsync()
+    }
+
+    override fun onNewIntent(intent: Intent) {
+        super.onNewIntent(intent)
+        setIntent(intent)
+        // Pressing Home returns cleanly to the Jeep HUD
+        if (isDrawerOpen) {
+            closeAppDrawer(animate = false)
+        }
+        etSearchApps.text?.clear()
+        hideKeyboard()
+        updateClockAndStatus()
     }
 
     override fun onResume() {
         super.onResume()
-        refreshStatusUi()
+        restoreActiveHighlight()
+        updateClockAndStatus()
+        mainHandler.removeCallbacks(clockTickRunnable)
+        mainHandler.post(clockTickRunnable)
     }
 
-    private fun loadPresetPreviewThumbnail() {
-        val ivPreview = findViewById<ImageView>(R.id.ivPresetPreview)
+    override fun onPause() {
+        super.onPause()
+        mainHandler.removeCallbacks(clockTickRunnable)
+    }
+
+    override fun onDestroy() {
+        super.onDestroy()
         try {
-            assets.open(DashApp.PRESET_ASSET_PATH).use { input ->
-                ZipInputStream(input).use { zis ->
-                    var entry = zis.nextEntry
-                    while (entry != null) {
-                        if (entry.name == "preset_thumb_portrait.jpg") {
-                            val bmp = BitmapFactory.decodeStream(zis)
-                            if (bmp != null) {
-                                ivPreview.setImageBitmap(bmp)
-                            }
-                            break
-                        }
-                        entry = zis.nextEntry
-                    }
-                }
-            }
+            unregisterReceiver(systemReceiver)
         } catch (_: Exception) {
-            ivPreview.setImageResource(R.mipmap.ic_launcher)
         }
+        try {
+            unregisterReceiver(packageChangeReceiver)
+        } catch (_: Exception) {
+        }
+        appLoaderExecutor.shutdownNow()
     }
 
-    private fun setupHeaderActions() {
-        findViewById<MaterialButton>(R.id.btnApplyKlwp).setOnClickListener {
-            openPresetInKlwp()
-        }
+    private fun applySystemBarInsets() {
+        val baseStatusTop = (8 * resources.displayMetrics.density).toInt()
+        val baseGearTop = (6 * resources.displayMetrics.density).toInt()
+        val baseDrawerTop = (12 * resources.displayMetrics.density).toInt()
+        val baseHandleBottom = (10 * resources.displayMetrics.density).toInt()
 
-        findViewById<MaterialButton>(R.id.btnExportKlwp).setOnClickListener {
-            exportPresetToDownloads()
-        }
+        val btnGear = findViewById<ImageButton>(R.id.btnSettingsGear)
+        val drawerHandle = findViewById<View>(R.id.layoutDrawerHandle)
 
-        findViewById<MaterialButton>(R.id.btnOpenFloatingApps).setOnClickListener {
-            val pkg = FloatingWindowLauncher.findFloatingAppsPackage(this)
-            if (pkg != null) {
-                packageManager.getLaunchIntentForPackage(pkg)?.let { startActivity(it) }
-            } else {
-                openPlayStore("com.lwi.android.flapps")
+        ViewCompat.setOnApplyWindowInsetsListener(findViewById(R.id.rootHudContainer)) { _, insets ->
+            val sysBars = insets.getInsets(WindowInsetsCompat.Type.systemBars())
+            (tvHudStatus.layoutParams as? ViewGroup.MarginLayoutParams)?.let { lp ->
+                lp.topMargin = baseStatusTop + sysBars.top
+                tvHudStatus.layoutParams = lp
             }
-        }
-
-        findViewById<MaterialButton>(R.id.btnDevOptions).setOnClickListener {
-            try {
-                startActivity(Intent(Settings.ACTION_APPLICATION_DEVELOPMENT_SETTINGS))
-            } catch (_: Exception) {
-                startActivity(Intent(Settings.ACTION_SETTINGS))
+            (btnGear.layoutParams as? ViewGroup.MarginLayoutParams)?.let { lp ->
+                lp.topMargin = baseGearTop + sysBars.top
+                btnGear.layoutParams = lp
             }
-        }
-
-        findViewById<MaterialButton>(R.id.btnEnableAccessibility).setOnClickListener {
-            try {
-                startActivity(Intent(Settings.ACTION_ACCESSIBILITY_SETTINGS))
-                Toast.makeText(
-                    this,
-                    "Enable \"Jeep HUD: YouTube Music → Audio Glow\"",
-                    Toast.LENGTH_LONG
-                ).show()
-            } catch (_: Exception) {
-                startActivity(Intent(Settings.ACTION_SETTINGS))
+            (drawerHandle.layoutParams as? ViewGroup.MarginLayoutParams)?.let { lp ->
+                lp.bottomMargin = baseHandleBottom + sysBars.bottom
+                drawerHandle.layoutParams = lp
             }
-        }
-
-        findViewById<MaterialButton>(R.id.btnTestGemini).setOnClickListener {
-            FloatingWindowLauncher.launchGeminiVoice(this)
-        }
-
-        findViewById<MaterialButton>(R.id.btnAssistantSettings).setOnClickListener {
-            try {
-                startActivity(Intent(Settings.ACTION_VOICE_INPUT_SETTINGS))
-            } catch (_: Exception) {
-                try {
-                    startActivity(Intent(Settings.ACTION_MANAGE_DEFAULT_APPS_SETTINGS))
-                } catch (_: Exception) {
-                    startActivity(Intent(Settings.ACTION_SETTINGS))
-                }
-            }
-        }
-    }
-
-    private fun setupSpinnersAndSwitches() {
-        val spWindowMode = findViewById<Spinner>(R.id.spWindowMode)
-        val windowModes = WindowMode.entries
-        spWindowMode.adapter = ArrayAdapter(
-            this,
-            android.R.layout.simple_spinner_dropdown_item,
-            windowModes.map { it.label }
-        )
-        spWindowMode.setSelection(windowModes.indexOf(prefs.windowMode).coerceAtLeast(0))
-        spWindowMode.onItemSelectedListener = object : AdapterView.OnItemSelectedListener {
-            override fun onItemSelected(parent: AdapterView<*>?, view: View?, pos: Int, id: Long) {
-                prefs.windowMode = windowModes[pos]
-            }
-            override fun onNothingSelected(parent: AdapterView<*>?) {}
-        }
-
-        val swAutoGlow = findViewById<SwitchMaterial>(R.id.swAutoAudioGlow)
-        swAutoGlow.isChecked = prefs.autoLaunchAudioGlow
-        swAutoGlow.setOnCheckedChangeListener { _, isChecked ->
-            prefs.autoLaunchAudioGlow = isChecked
-        }
-
-        val spAudioGlowLayout = findViewById<Spinner>(R.id.spAudioGlowLayout)
-        val layouts = AudioGlowLayout.entries
-        spAudioGlowLayout.adapter = ArrayAdapter(
-            this,
-            android.R.layout.simple_spinner_dropdown_item,
-            layouts.map { it.label }
-        )
-        spAudioGlowLayout.setSelection(layouts.indexOf(prefs.audioGlowLayout).coerceAtLeast(0))
-        spAudioGlowLayout.onItemSelectedListener = object : AdapterView.OnItemSelectedListener {
-            override fun onItemSelected(parent: AdapterView<*>?, view: View?, pos: Int, id: Long) {
-                prefs.audioGlowLayout = layouts[pos]
-            }
-            override fun onNothingSelected(parent: AdapterView<*>?) {}
-        }
-
-        val spGeminiMode = findViewById<Spinner>(R.id.spGeminiMode)
-        val geminiModes = GeminiLaunchMode.entries
-        spGeminiMode.adapter = ArrayAdapter(
-            this,
-            android.R.layout.simple_spinner_dropdown_item,
-            geminiModes.map { it.label }
-        )
-        spGeminiMode.setSelection(geminiModes.indexOf(prefs.geminiMode).coerceAtLeast(0))
-        spGeminiMode.onItemSelectedListener = object : AdapterView.OnItemSelectedListener {
-            override fun onItemSelected(parent: AdapterView<*>?, view: View?, pos: Int, id: Long) {
-                prefs.geminiMode = geminiModes[pos]
-            }
-            override fun onNothingSelected(parent: AdapterView<*>?) {}
-        }
-    }
-
-    private fun setupBoundsControls() {
-        fun syncSeekBars() {
-            sbLeft.progress = prefs.windowLeftPct
-            sbTop.progress = prefs.windowTopPct
-            sbRight.progress = prefs.windowRightPct
-            sbBottom.progress = prefs.windowBottomPct
-            sbSplit.progress = prefs.ytMusicSplitPct
-            updateBoundsLabels()
-        }
-
-        val listener = object : SeekBar.OnSeekBarChangeListener {
-            override fun onProgressChanged(seekBar: SeekBar?, progress: Int, fromUser: Boolean) {
-                if (!fromUser) return
-                when (seekBar?.id) {
-                    R.id.sbLeft -> prefs.windowLeftPct = progress
-                    R.id.sbTop -> prefs.windowTopPct = progress
-                    R.id.sbRight -> prefs.windowRightPct = progress.coerceAtLeast(prefs.windowLeftPct + 25)
-                    R.id.sbBottom -> prefs.windowBottomPct = progress.coerceAtLeast(prefs.windowTopPct + 25)
-                    R.id.sbSplit -> prefs.ytMusicSplitPct = progress.coerceIn(30, 75)
-                }
-                updateBoundsLabels()
-            }
-            override fun onStartTrackingTouch(seekBar: SeekBar?) {}
-            override fun onStopTrackingTouch(seekBar: SeekBar?) {}
-        }
-
-        sbLeft.setOnSeekBarChangeListener(listener)
-        sbTop.setOnSeekBarChangeListener(listener)
-        sbRight.setOnSeekBarChangeListener(listener)
-        sbBottom.setOnSeekBarChangeListener(listener)
-        sbSplit.setOnSeekBarChangeListener(listener)
-
-        findViewById<MaterialButton>(R.id.btnResetBounds).setOnClickListener {
-            prefs.resetBoundsToDefault()
-            syncSeekBars()
-            Toast.makeText(this, "HUD window bounds reset to defaults.", Toast.LENGTH_SHORT).show()
-        }
-
-        syncSeekBars()
-    }
-
-    private fun updateBoundsLabels() {
-        val rect = FloatingWindowLauncher.computeHudFrameBounds(this, prefs)
-        tvBoundsSummary.text =
-            "Right HUD frame: (${rect.left}, ${rect.top}) → (${rect.right}, ${rect.bottom}) px"
-        tvLeftLabel.text = "Left edge: ${prefs.windowLeftPct}%"
-        tvTopLabel.text = "Top edge: ${prefs.windowTopPct}%"
-        tvRightLabel.text = "Right edge: ${prefs.windowRightPct}%"
-        tvBottomLabel.text = "Bottom edge (above climate bar): ${prefs.windowBottomPct}%"
-        tvSplitLabel.text = "YouTube Music / Audio Glow split: ${prefs.ytMusicSplitPct}% / ${100 - prefs.ytMusicSplitPct}%"
-    }
-
-    private fun refreshStatusUi() {
-        val klwpOk = FloatingWindowLauncher.isPackageInstalled(this, DashApp.KLWP_PACKAGE)
-        val flappsPkg = FloatingWindowLauncher.findFloatingAppsPackage(this)
-        val audioGlowPkg = FloatingWindowLauncher.findInstalledPackage(this, DashApp.AUDIO_GLOW, prefs)
-
-        tvCoreStatus.text = buildString {
-            append(if (klwpOk) "✓ KLWP installed" else "✗ KLWP not installed (required)")
-            append("  •  ")
-            append(if (flappsPkg != null) "✓ Floating Apps installed" else "⚠ Floating Apps not detected")
-            append("\n")
-            append(if (audioGlowPkg != null) "✓ Audio Glow installed" else "⚠ Audio Glow not installed yet")
-        }
-
-        val accEnabled = YouTubeMusicMonitorService.isEnabled(this)
-        tvAccessibilityStatus.text = if (accEnabled) {
-            "✓ Background YouTube Music monitor is ACTIVE — Audio Glow will auto-open whenever YouTube Music starts."
-        } else {
-            "⚠ Optional: Enable the monitor below so Audio Glow also opens if YouTube Music is launched outside the sidebar."
-        }
-        tvAccessibilityStatus.setTextColor(
-            ContextCompat.getColor(this, if (accEnabled) R.color.hud_green else R.color.hud_amber)
-        )
-
-        rebuildAppBindingRows()
-    }
-
-    private fun rebuildAppBindingRows() {
-        containerAppBindings.removeAllViews()
-        val inflater = LayoutInflater.from(this)
-        val hasFloatingApps = FloatingWindowLauncher.findFloatingAppsPackage(this) != null
-
-        for (app in DashApp.entries) {
-            val row = inflater.inflate(R.layout.item_app_binding, containerAppBindings, false)
-            val tvName = row.findViewById<TextView>(R.id.tvAppName)
-            val tvStatus = row.findViewById<TextView>(R.id.tvAppStatus)
-            val btnLink = row.findViewById<MaterialButton>(R.id.btnLinkFloating)
-            val btnTest = row.findViewById<MaterialButton>(R.id.btnTestApp)
-
-            val installedPkg = FloatingWindowLauncher.findInstalledPackage(this, app, prefs)
-            val linkedUri = prefs.getShortcutUri(app)
-            val linkedLabel = prefs.getShortcutLabel(app)
-
-            tvName.text = app.displayName
-            tvStatus.text = when {
-                linkedUri != null -> "✓ Linked to Floating Apps (${linkedLabel ?: "Shortcut"})"
-                installedPkg != null -> "✓ Ready ($installedPkg)"
-                else -> "✗ Not installed — tap Test to install"
-            }
-            tvStatus.setTextColor(
-                ContextCompat.getColor(
-                    this,
-                    when {
-                        linkedUri != null -> R.color.hud_cyan
-                        installedPkg != null -> R.color.hud_green
-                        else -> R.color.hud_red
-                    }
-                )
+            layoutDrawerHeader.setPadding(
+                layoutDrawerHeader.paddingLeft,
+                baseDrawerTop + sysBars.top,
+                layoutDrawerHeader.paddingRight,
+                layoutDrawerHeader.paddingBottom
             )
-
-            btnLink.text = if (linkedUri != null) "Clear FA" else "Link FA"
-            btnLink.setOnClickListener {
-                if (linkedUri != null) {
-                    prefs.setShortcutUri(app, null)
-                    Toast.makeText(this, "Cleared Floating Apps shortcut for ${app.displayName}", Toast.LENGTH_SHORT).show()
-                    refreshStatusUi()
-                } else if (!hasFloatingApps) {
-                    Toast.makeText(this, "Install Floating Apps first to link shortcuts.", Toast.LENGTH_LONG).show()
-                    openPlayStore("com.lwi.android.flapps")
-                } else {
-                    val picker = FloatingWindowLauncher.buildFloatingAppsShortcutPickerIntent(this)
-                    if (picker != null) {
-                        pendingShortcutApp = app
-                        shortcutPickerLauncher.launch(picker)
-                    } else {
-                        Toast.makeText(this, "Floating Apps shortcut picker unavailable.", Toast.LENGTH_SHORT).show()
-                    }
-                }
-            }
-
-            btnTest.setOnClickListener {
-                if (installedPkg == null && linkedUri == null && app != DashApp.GEMINI) {
-                    openPlayStore(app.playStoreId)
-                } else {
-                    when (app) {
-                        DashApp.GEMINI -> FloatingWindowLauncher.launchGeminiVoice(this)
-                        DashApp.YOUTUBE_MUSIC -> FloatingWindowLauncher.launchYouTubeMusicWithAudioGlow(this)
-                        DashApp.AUDIO_GLOW -> FloatingWindowLauncher.launchAudioGlow(this, asCompanion = false)
-                        else -> FloatingWindowLauncher.launchApp(this, app)
-                    }
-                }
-            }
-
-            containerAppBindings.addView(row)
+            rvAppDrawer.setPadding(
+                rvAppDrawer.paddingLeft,
+                rvAppDrawer.paddingTop,
+                rvAppDrawer.paddingRight,
+                (24 * resources.displayMetrics.density).toInt() + sysBars.bottom
+            )
+            insets
         }
     }
 
-    private fun openPresetInKlwp() {
-        if (!FloatingWindowLauncher.isPackageInstalled(this, DashApp.KLWP_PACKAGE)) {
-            Toast.makeText(this, "KLWP Live Wallpaper is not installed. Opening Google Play...", Toast.LENGTH_LONG).show()
-            openPlayStore(DashApp.KLWP_PACKAGE)
+    private fun setupSidebarButtons() {
+        val definitions = listOf(
+            Triple(R.id.btnGemini, DashApp.GEMINI, R.drawable.icon_gemini to "Gemini"),
+            Triple(R.id.btnTorque, DashApp.TORQUE, R.drawable.icon_torque to "Torque"),
+            Triple(R.id.btnJellyfin, DashApp.JELLYFIN, R.drawable.icon_jellyfin to "Jellyfin"),
+            Triple(R.id.btnWaze, DashApp.WAZE, R.drawable.icon_waze to "Waze"),
+            Triple(R.id.btnYouTube, DashApp.YOUTUBE, R.drawable.icon_youtube to "YouTube"),
+            Triple(R.id.btnYouTubeMusic, DashApp.YOUTUBE_MUSIC, R.drawable.icon_ytmusic to "YouTube\nMusic")
+        )
+
+        sidebarSlots.clear()
+        for ((viewId, dashApp, iconAndLabel) in definitions) {
+            val root = findViewById<View>(viewId)
+            val cardBg = root.findViewById<ImageView>(R.id.ivCardBg)
+            val iconView = root.findViewById<ImageView>(R.id.ivAppIcon)
+            val labelView = root.findViewById<TextView>(R.id.tvAppLabel)
+            val arrowView = root.findViewById<ImageView>(R.id.ivActiveArrow)
+
+            iconView.setImageResource(iconAndLabel.first)
+            labelView.text = iconAndLabel.second
+            if (dashApp == DashApp.YOUTUBE_MUSIC) {
+                labelView.textSize = 10f
+            }
+
+            val slot = SidebarSlot(
+                app = dashApp,
+                label = iconAndLabel.second,
+                iconRes = iconAndLabel.first,
+                root = root,
+                cardBg = cardBg,
+                iconView = iconView,
+                labelView = labelView,
+                arrowView = arrowView
+            )
+            sidebarSlots += slot
+
+            root.setOnClickListener {
+                setActiveApp(dashApp)
+                launchSidebarApp(dashApp)
+            }
+            root.setOnLongClickListener {
+                openSettingsScreen()
+                true
+            }
+        }
+    }
+
+    private fun setupHudInteractions() {
+        findViewById<ImageButton>(R.id.btnSettingsGear).setOnClickListener {
+            openSettingsScreen()
+        }
+
+        findViewById<View>(R.id.layoutClockBezel).setOnClickListener {
+            openSettingsScreen()
+        }
+
+        findViewById<View>(R.id.viewHudFrameTouch).setOnClickListener {
+            setActiveApp(null)
+        }
+
+        findViewById<View>(R.id.layoutDrawerHandle).setOnClickListener {
+            openAppDrawer()
+        }
+    }
+
+    override fun dispatchTouchEvent(ev: MotionEvent): Boolean {
+        if (!isDrawerOpen) {
+            when (ev.actionMasked) {
+                MotionEvent.ACTION_DOWN -> {
+                    downRawX = ev.rawX
+                    downRawY = ev.rawY
+                    swipeHandledForGesture = false
+                }
+                MotionEvent.ACTION_MOVE -> {
+                    if (!swipeHandledForGesture) {
+                        val dyUp = downRawY - ev.rawY
+                        val dx = abs(ev.rawX - downRawX)
+                        if (dyUp > swipeThresholdPx && dyUp > dx * 1.3f) {
+                            swipeHandledForGesture = true
+                            val cancelEvent = MotionEvent.obtain(
+                                ev.downTime,
+                                SystemClock.uptimeMillis(),
+                                MotionEvent.ACTION_CANCEL,
+                                ev.x,
+                                ev.y,
+                                0
+                            )
+                            super.dispatchTouchEvent(cancelEvent)
+                            cancelEvent.recycle()
+                            openAppDrawer()
+                            return true
+                        }
+                    }
+                }
+                MotionEvent.ACTION_UP -> {
+                    if (swipeHandledForGesture) {
+                        swipeHandledForGesture = false
+                        return true
+                    }
+                }
+            }
+        }
+        return super.dispatchTouchEvent(ev)
+    }
+
+    private fun setupAppDrawer() {
+        rvAppDrawer.layoutManager = GridLayoutManager(this, 4)
+        rvAppDrawer.adapter = drawerAdapter
+
+        findViewById<ImageButton>(R.id.btnCloseDrawer).setOnClickListener {
+            closeAppDrawer()
+        }
+        findViewById<MaterialButton>(R.id.btnDrawerSettings).setOnClickListener {
+            closeAppDrawer(animate = false)
+            openSettingsScreen()
+        }
+
+        // Allow swiping down on the drawer header to dismiss
+        layoutDrawerHeader.setOnTouchListener { _, event ->
+            when (event.actionMasked) {
+                MotionEvent.ACTION_DOWN -> headerDownRawY = event.rawY
+                MotionEvent.ACTION_MOVE -> {
+                    if (event.rawY - headerDownRawY > swipeThresholdPx) {
+                        closeAppDrawer()
+                        return@setOnTouchListener true
+                    }
+                }
+            }
+            false
+        }
+
+        etSearchApps.addTextChangedListener(object : TextWatcher {
+            override fun beforeTextChanged(s: CharSequence?, start: Int, count: Int, after: Int) {}
+            override fun onTextChanged(s: CharSequence?, start: Int, before: Int, count: Int) {
+                filterDrawerApps(s?.toString().orEmpty())
+            }
+            override fun afterTextChanged(s: Editable?) {}
+        })
+    }
+
+    private fun setupBackBehavior() {
+        onBackPressedDispatcher.addCallback(this, object : OnBackPressedCallback(true) {
+            override fun handleOnBackPressed() {
+                if (isDrawerOpen) {
+                    closeAppDrawer()
+                }
+                // Home Launcher ignores Back when already on Home HUD
+            }
+        })
+    }
+
+    private fun registerReceivers() {
+        val sysFilter = IntentFilter().apply {
+            addAction(Intent.ACTION_BATTERY_CHANGED)
+            addAction(Intent.ACTION_TIME_TICK)
+            addAction(Intent.ACTION_TIME_CHANGED)
+            addAction(Intent.ACTION_TIMEZONE_CHANGED)
+            addAction(Intent.ACTION_DATE_CHANGED)
+        }
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+            registerReceiver(systemReceiver, sysFilter, RECEIVER_NOT_EXPORTED)
+        } else {
+            @Suppress("DEPRECATION")
+            registerReceiver(systemReceiver, sysFilter)
+        }
+
+        val pkgFilter = IntentFilter().apply {
+            addAction(Intent.ACTION_PACKAGE_ADDED)
+            addAction(Intent.ACTION_PACKAGE_REMOVED)
+            addAction(Intent.ACTION_PACKAGE_CHANGED)
+            addDataScheme("package")
+        }
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+            registerReceiver(packageChangeReceiver, pkgFilter, RECEIVER_NOT_EXPORTED)
+        } else {
+            @Suppress("DEPRECATION")
+            registerReceiver(packageChangeReceiver, pkgFilter)
+        }
+    }
+
+    private fun restoreActiveHighlight() {
+        setActiveApp(DashApp.fromId(prefs.activeAppId), persist = false)
+    }
+
+    private fun setActiveApp(activeApp: DashApp?, persist: Boolean = true) {
+        if (persist) {
+            prefs.activeAppId = activeApp?.id
+        }
+        for (slot in sidebarSlots) {
+            val isActive = slot.app == activeApp
+            slot.cardBg.setImageResource(
+                if (isActive) R.drawable.btn_active_glow else R.drawable.btn_inactive
+            )
+            slot.arrowView.visibility = if (isActive) View.VISIBLE else View.GONE
+        }
+    }
+
+    private fun launchSidebarApp(app: DashApp) {
+        when (app) {
+            DashApp.GEMINI -> FloatingWindowLauncher.launchGeminiVoice(this)
+            DashApp.YOUTUBE_MUSIC -> FloatingWindowLauncher.launchYouTubeMusicWithAudioGlow(this)
+            else -> FloatingWindowLauncher.launchApp(this, app)
+        }
+    }
+
+    private fun openSettingsScreen() {
+        startActivity(Intent(this, SettingsActivity::class.java))
+    }
+
+    private fun openAppDrawer() {
+        if (isDrawerOpen) return
+        isDrawerOpen = true
+        if (allApps.isEmpty()) {
+            loadInstalledAppsAsync()
+        }
+        layoutAppDrawer.animate().cancel()
+        val startOffset = (hudOverlayContainer.height.takeIf { it > 0 } ?: 600).toFloat()
+        layoutAppDrawer.translationY = startOffset * 0.35f
+        layoutAppDrawer.alpha = 0f
+        layoutAppDrawer.visibility = View.VISIBLE
+        layoutAppDrawer.animate()
+            .translationY(0f)
+            .alpha(1f)
+            .setDuration(220L)
+            .start()
+    }
+
+    private fun closeAppDrawer(animate: Boolean = true) {
+        if (!isDrawerOpen && layoutAppDrawer.visibility != View.VISIBLE) return
+        isDrawerOpen = false
+        hideKeyboard()
+        layoutAppDrawer.animate().cancel()
+        if (!animate) {
+            layoutAppDrawer.visibility = View.GONE
+            layoutAppDrawer.translationY = 0f
+            layoutAppDrawer.alpha = 1f
             return
         }
-        try {
-            val kfileUri = Uri.Builder()
-                .scheme("kfile")
-                .authority("$packageName.kustom.provider")
-                .appendPath(DashApp.PRESET_ASSET_PATH)
-                .build()
-            val intent = Intent().apply {
-                component = ComponentName(DashApp.KLWP_PACKAGE, DashApp.KLWP_EDITOR_ACTIVITY)
-                data = kfileUri
-                addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
-            }
-            startActivity(intent)
-        } catch (e: Exception) {
-            Toast.makeText(
-                this,
-                "Open KLWP → Load Preset → Installed → Jeep HUD Dashboard",
-                Toast.LENGTH_LONG
-            ).show()
-            packageManager.getLaunchIntentForPackage(DashApp.KLWP_PACKAGE)?.let { startActivity(it) }
-        }
-    }
-
-    private fun exportPresetToDownloads() {
-        try {
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
-                val values = ContentValues().apply {
-                    put(MediaStore.Downloads.DISPLAY_NAME, DashApp.PRESET_FILE_NAME)
-                    put(MediaStore.Downloads.MIME_TYPE, "application/octet-stream")
-                    put(MediaStore.Downloads.RELATIVE_PATH, Environment.DIRECTORY_DOWNLOADS)
-                }
-                val uri = contentResolver.insert(MediaStore.Downloads.EXTERNAL_CONTENT_URI, values)
-                if (uri != null) {
-                    contentResolver.openOutputStream(uri)?.use { out ->
-                        assets.open(DashApp.PRESET_ASSET_PATH).use { inp -> inp.copyTo(out) }
-                    }
-                    Toast.makeText(this, "Exported to Downloads/${DashApp.PRESET_FILE_NAME}", Toast.LENGTH_LONG).show()
-                    return
+        layoutAppDrawer.animate()
+            .translationY(260f)
+            .alpha(0f)
+            .setDuration(180L)
+            .withEndAction {
+                if (!isDrawerOpen) {
+                    layoutAppDrawer.visibility = View.GONE
+                    layoutAppDrawer.translationY = 0f
+                    layoutAppDrawer.alpha = 1f
                 }
             }
-            val dir = getExternalFilesDir(Environment.DIRECTORY_DOWNLOADS) ?: filesDir
-            val outFile = File(dir, DashApp.PRESET_FILE_NAME)
-            FileOutputStream(outFile).use { out ->
-                assets.open(DashApp.PRESET_ASSET_PATH).use { inp -> inp.copyTo(out) }
-            }
-            Toast.makeText(this, "Exported to ${outFile.absolutePath}", Toast.LENGTH_LONG).show()
-        } catch (e: Exception) {
-            Toast.makeText(this, "Export failed: ${e.message}", Toast.LENGTH_LONG).show()
-        }
+            .start()
     }
 
-    private fun openPlayStore(pkg: String) {
-        try {
-            startActivity(Intent(Intent.ACTION_VIEW, Uri.parse("market://details?id=$pkg")))
+    private fun hideKeyboard() {
+        etSearchApps.clearFocus()
+        val imm = getSystemService(Context.INPUT_METHOD_SERVICE) as? InputMethodManager
+        imm?.hideSoftInputFromWindow(etSearchApps.windowToken, 0)
+    }
+
+    private fun updateClockAndStatus() {
+        val now = Date()
+        val timeFmt = SimpleDateFormat(if (prefs.clock24h) "HH:mm" else "hh:mm", Locale.getDefault())
+        val dateFmt = SimpleDateFormat("EEEE, d MMM", Locale.getDefault())
+        tvClock.text = timeFmt.format(now)
+        tvDate.text = dateFmt.format(now)
+
+        val parts = mutableListOf<String>()
+        val pct = if (batteryPct >= 0) batteryPct else readBatteryPercent()
+        if (pct >= 0) parts += "$pct%"
+        if (isBluetoothOn()) parts += "BT"
+        if (isWifiConnected()) parts += "WIFI"
+        tvHudStatus.text = parts.joinToString("  ")
+    }
+
+    private fun readBatteryPercent(): Int {
+        return try {
+            val bm = getSystemService(Context.BATTERY_SERVICE) as BatteryManager
+            bm.getIntProperty(BatteryManager.BATTERY_PROPERTY_CAPACITY)
         } catch (_: Exception) {
-            startActivity(Intent(Intent.ACTION_VIEW, Uri.parse("https://play.google.com/store/apps/details?id=$pkg")))
+            -1
         }
+    }
+
+    private fun isBluetoothOn(): Boolean {
+        return try {
+            val bm = getSystemService(Context.BLUETOOTH_SERVICE) as? BluetoothManager
+            bm?.adapter?.isEnabled == true
+        } catch (_: Exception) {
+            false
+        }
+    }
+
+    private fun isWifiConnected(): Boolean {
+        return try {
+            val cm = getSystemService(Context.CONNECTIVITY_SERVICE) as ConnectivityManager
+            val network = cm.activeNetwork ?: return false
+            val caps = cm.getNetworkCapabilities(network) ?: return false
+            caps.hasTransport(NetworkCapabilities.TRANSPORT_WIFI)
+        } catch (_: Exception) {
+            false
+        }
+    }
+
+    private fun loadInstalledAppsAsync() {
+        appLoaderExecutor.execute {
+            val pm = packageManager
+            val queryIntent = Intent(Intent.ACTION_MAIN).addCategory(Intent.CATEGORY_LAUNCHER)
+            val resolved = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+                pm.queryIntentActivities(queryIntent, PackageManager.ResolveInfoFlags.of(0))
+            } else {
+                @Suppress("DEPRECATION")
+                pm.queryIntentActivities(queryIntent, 0)
+            }
+
+            val seenPackages = HashSet<String>()
+            val loaded = mutableListOf<DrawerAppItem>()
+            for (ri in resolved) {
+                val pkg = ri.activityInfo?.packageName ?: continue
+                if (pkg == packageName || !seenPackages.add(pkg)) continue
+                val label = ri.loadLabel(pm)?.toString()?.trim().takeUnless { it.isNullOrEmpty() } ?: pkg
+                val icon = ri.loadIcon(pm)
+                loaded += DrawerAppItem(label = label, packageName = pkg, icon = icon)
+            }
+            loaded.sortBy { it.label.lowercase(Locale.getDefault()) }
+
+            mainHandler.post {
+                allApps.clear()
+                allApps.addAll(loaded)
+                filterDrawerApps(etSearchApps.text?.toString().orEmpty())
+            }
+        }
+    }
+
+    private fun filterDrawerApps(query: String) {
+        val trimmed = query.trim().lowercase(Locale.getDefault())
+        val filtered = if (trimmed.isEmpty()) {
+            allApps.toList()
+        } else {
+            allApps.filter {
+                it.label.lowercase(Locale.getDefault()).contains(trimmed) ||
+                    it.packageName.lowercase(Locale.getDefault()).contains(trimmed)
+            }
+        }
+        drawerAdapter.submitList(filtered)
+    }
+
+    private inner class AppDrawerAdapter : RecyclerView.Adapter<AppDrawerViewHolder>() {
+        private var items: List<DrawerAppItem> = emptyList()
+
+        fun submitList(newItems: List<DrawerAppItem>) {
+            items = newItems
+            notifyDataSetChanged()
+        }
+
+        override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): AppDrawerViewHolder {
+            val view = LayoutInflater.from(parent.context)
+                .inflate(R.layout.item_drawer_app, parent, false)
+            return AppDrawerViewHolder(view)
+        }
+
+        override fun onBindViewHolder(holder: AppDrawerViewHolder, position: Int) {
+            val item = items[position]
+            holder.icon.setImageDrawable(item.icon)
+            holder.label.text = item.label
+            holder.itemView.setOnClickListener {
+                closeAppDrawer(animate = false)
+                val launchIntent = packageManager.getLaunchIntentForPackage(item.packageName)
+                if (launchIntent != null) {
+                    launchIntent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+                    try {
+                        startActivity(launchIntent)
+                    } catch (_: Exception) {
+                        Toast.makeText(
+                            this@MainActivity,
+                            "Unable to open ${item.label}",
+                            Toast.LENGTH_SHORT
+                        ).show()
+                    }
+                }
+            }
+            holder.itemView.setOnLongClickListener {
+                closeAppDrawer(animate = false)
+                FloatingWindowLauncher.launchPackageInWindow(this@MainActivity, item.packageName)
+                true
+            }
+        }
+
+        override fun getItemCount(): Int = items.size
+    }
+
+    private class AppDrawerViewHolder(view: View) : RecyclerView.ViewHolder(view) {
+        val icon: ImageView = view.findViewById(R.id.ivDrawerIcon)
+        val label: TextView = view.findViewById(R.id.tvDrawerLabel)
     }
 }

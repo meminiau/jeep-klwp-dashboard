@@ -76,10 +76,6 @@ enum class DashApp(
             "com.lwi.android.flappsfull",
             "com.lwi.android.flapps"
         )
-        const val KLWP_PACKAGE = "org.kustom.wallpaper"
-        const val KLWP_EDITOR_ACTIVITY = "org.kustom.lib.editor.WpAdvancedEditorActivity"
-        const val PRESET_ASSET_PATH = "wallpapers/Jeep_HUD_Dashboard.klwp"
-        const val PRESET_FILE_NAME = "Jeep_HUD_Dashboard.klwp"
 
         fun fromId(id: String?): DashApp? = entries.firstOrNull { it.id == id }
     }
@@ -122,7 +118,7 @@ class DashPrefs(context: Context) {
         context.applicationContext.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
 
     // HUD right-hand frame bounds as percentage (0..100) of screen width/height.
-    // Tuned to match the chamfered cyan right-hand frame of Jeep_HUD_Dashboard.klwp.
+    // Tuned to match the chamfered cyan right-hand frame of bg_jeep_hud.
     var windowLeftPct: Int
         get() = prefs.getInt(KEY_WIN_LEFT, 27)
         set(value) = prefs.edit().putInt(KEY_WIN_LEFT, value.coerceIn(0, 70)).apply()
@@ -158,6 +154,20 @@ class DashPrefs(context: Context) {
     var audioGlowLayout: AudioGlowLayout
         get() = AudioGlowLayout.fromId(prefs.getString(KEY_AUDIO_GLOW_LAYOUT, null))
         set(value) = prefs.edit().putString(KEY_AUDIO_GLOW_LAYOUT, value.id).apply()
+
+    var clock24h: Boolean
+        get() = prefs.getBoolean(KEY_CLOCK_24H, true)
+        set(value) = prefs.edit().putBoolean(KEY_CLOCK_24H, value).apply()
+
+    var activeAppId: String?
+        get() = prefs.getString(KEY_ACTIVE_APP_ID, null)?.takeIf { it.isNotBlank() }
+        set(value) {
+            if (value.isNullOrBlank()) {
+                prefs.edit().remove(KEY_ACTIVE_APP_ID).apply()
+            } else {
+                prefs.edit().putString(KEY_ACTIVE_APP_ID, value).apply()
+            }
+        }
 
     fun getShortcutUri(app: DashApp): String? =
         prefs.getString("$KEY_SHORTCUT_PREFIX${app.id}", null)?.takeIf { it.isNotBlank() }
@@ -211,6 +221,8 @@ class DashPrefs(context: Context) {
         private const val KEY_GEMINI_MODE = "gemini_mode"
         private const val KEY_AUTO_AUDIO_GLOW = "auto_audio_glow"
         private const val KEY_AUDIO_GLOW_LAYOUT = "audio_glow_layout"
+        private const val KEY_CLOCK_24H = "clock_24h"
+        private const val KEY_ACTIVE_APP_ID = "active_app_id"
         private const val KEY_SHORTCUT_PREFIX = "shortcut_uri_"
         private const val KEY_SHORTCUT_LABEL_PREFIX = "shortcut_label_"
         private const val KEY_CUSTOM_PKG_PREFIX = "custom_pkg_"
